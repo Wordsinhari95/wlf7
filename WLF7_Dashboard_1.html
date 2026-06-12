@@ -1,0 +1,999 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>WLF7 Abstract Statistics Dashboard</title>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300;0,9..144,700;0,9..144,900;1,9..144,400&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<style>
+:root {
+  --ink:#0f1923; --paper:#f5f2eb; --cream:#ede9df; --navy:#1a3a6b; --steel:#2563a8;
+  --rust:#c0392b; --gold:#b8860b; --sage:#2d6a4f; --slate:#607d8b;
+  --t1:#1a3a6b; --t2:#2563a8; --t3:#2d6a4f; --t4:#c0771a; --t5:#c0392b; --t6:#6b3a9e; --nt:#607d8b;
+  --shadow:0 4px 24px rgba(15,25,35,.09); --shadow-lg:0 12px 48px rgba(15,25,35,.14);
+}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+body{font-family:'DM Sans',sans-serif;background:var(--paper);color:var(--ink);min-height:100vh;overflow-x:hidden;}
+
+/* HERO */
+.hero{background:var(--navy);background-image:radial-gradient(ellipse at 20% 50%,rgba(37,99,168,.4) 0%,transparent 60%),radial-gradient(ellipse at 80% 20%,rgba(192,57,43,.2) 0%,transparent 50%);padding:52px 48px 44px;position:relative;overflow:hidden;}
+.hero::before{content:'';position:absolute;inset:0;background-image:url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='%23ffffff' fill-opacity='0.025'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/svg%3E");}
+.hero-inner{position:relative;max-width:1320px;margin:0 auto;}
+.hero-eyebrow{font-size:.72rem;font-weight:600;letter-spacing:.18em;text-transform:uppercase;color:rgba(255,255,255,.5);margin-bottom:12px;}
+.hero-title{font-family:'Fraunces',serif;font-size:clamp(2rem,4vw,3.2rem);font-weight:900;color:#fff;line-height:1.1;margin-bottom:10px;}
+.hero-title em{color:#f0c040;font-style:italic;}
+.hero-sub{font-size:.9rem;color:rgba(255,255,255,.6);margin-bottom:32px;max-width:600px;}
+.hero-pills{display:flex;gap:10px;flex-wrap:wrap;}
+.pill{background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.2);border-radius:20px;padding:5px 16px;font-size:.8rem;color:rgba(255,255,255,.85);font-weight:500;}
+.pill strong{color:#fff;}
+
+/* NAV */
+.nav-wrap{background:var(--ink);position:sticky;top:0;z-index:100;border-bottom:1px solid rgba(255,255,255,.06);}
+.nav-inner{max-width:1320px;margin:0 auto;display:flex;gap:2px;padding:0 48px;overflow-x:auto;}
+.nav-tab{padding:14px 22px;font-size:.82rem;font-weight:500;color:rgba(255,255,255,.45);cursor:pointer;white-space:nowrap;border-bottom:2px solid transparent;transition:all .2s;background:none;border-top:none;border-left:none;border-right:none;font-family:'DM Sans',sans-serif;}
+.nav-tab:hover{color:rgba(255,255,255,.75);}
+.nav-tab.active{color:#fff;border-bottom-color:#f0c040;}
+
+/* MAIN */
+.main{max-width:1320px;margin:0 auto;padding:40px 48px 80px;}
+.section{display:none;animation:fadeUp .4s both;}
+.section.active{display:block;}
+
+/* KPI */
+.kpi-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:20px;margin-bottom:36px;}
+.kpi-card{background:#fff;border-radius:16px;padding:24px 22px 20px;box-shadow:var(--shadow);position:relative;overflow:hidden;}
+.kpi-card::after{content:'';position:absolute;top:0;left:0;right:0;height:3px;}
+.kpi-card:nth-child(1)::after{background:var(--navy);}
+.kpi-card:nth-child(2)::after{background:var(--steel);}
+.kpi-card:nth-child(3)::after{background:var(--rust);}
+.kpi-card:nth-child(4)::after{background:var(--sage);}
+.kpi-label{font-size:.7rem;font-weight:600;letter-spacing:.1em;text-transform:uppercase;color:#8a9bb0;margin-bottom:8px;}
+.kpi-value{font-family:'Fraunces',serif;font-size:3rem;font-weight:900;line-height:1;margin-bottom:4px;}
+.kpi-card:nth-child(1) .kpi-value{color:var(--navy);}
+.kpi-card:nth-child(2) .kpi-value{color:var(--steel);}
+.kpi-card:nth-child(3) .kpi-value{color:var(--rust);}
+.kpi-card:nth-child(4) .kpi-value{color:var(--sage);}
+.kpi-sub{font-size:.78rem;color:#8a9bb0;}
+
+/* CARDS & CHARTS */
+.chart-row{display:grid;gap:24px;margin-bottom:28px;}
+.chart-row.two{grid-template-columns:3fr 2fr;}
+.chart-row.two-eq{grid-template-columns:1fr 1fr;}
+.chart-row.one{grid-template-columns:1fr;}
+.card{background:#fff;border-radius:16px;padding:24px 26px;box-shadow:var(--shadow);}
+.card-header{display:flex;align-items:baseline;justify-content:space-between;margin-bottom:18px;gap:12px;}
+.card-title{font-family:'Fraunces',serif;font-size:1.05rem;font-weight:700;color:var(--navy);}
+.card-sub{font-size:.75rem;color:#8a9bb0;}
+.chart-wrap{position:relative;}
+
+/* THEME GRID */
+.theme-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:16px;margin-bottom:28px;}
+.theme-card{border-radius:14px;padding:18px 16px;color:white;position:relative;overflow:hidden;}
+.theme-card::before{content:'';position:absolute;right:-20px;top:-20px;width:80px;height:80px;border-radius:50%;background:rgba(255,255,255,.08);}
+.theme-card:nth-child(1){background:linear-gradient(135deg,#1a3a6b,#2563a8);}
+.theme-card:nth-child(2){background:linear-gradient(135deg,#2563a8,#3b82cc);}
+.theme-card:nth-child(3){background:linear-gradient(135deg,#2d6a4f,#40916c);}
+.theme-card:nth-child(4){background:linear-gradient(135deg,#c0771a,#d4a00a);}
+.theme-card:nth-child(5){background:linear-gradient(135deg,#c0392b,#e74c3c);}
+.theme-card:nth-child(6){background:linear-gradient(135deg,#6b3a9e,#8e44ad);}
+.theme-card:nth-child(7){background:linear-gradient(135deg,#607d8b,#78909c);}
+.theme-badge{font-size:.65rem;font-weight:700;letter-spacing:.12em;text-transform:uppercase;opacity:.7;margin-bottom:6px;}
+.theme-count{font-family:'Fraunces',serif;font-size:2.2rem;font-weight:900;line-height:1;margin-bottom:2px;}
+.theme-name{font-size:.78rem;opacity:.85;line-height:1.3;margin-bottom:10px;}
+.theme-meta{display:flex;gap:10px;flex-wrap:wrap;}
+.theme-meta span{font-size:.7rem;opacity:.7;background:rgba(255,255,255,.12);padding:2px 8px;border-radius:10px;}
+
+/* REGION GRID */
+.region-grid{display:grid;grid-template-columns:repeat(5,1fr);gap:14px;}
+.region-card{border-radius:12px;padding:16px;text-align:center;}
+.region-card:nth-child(1){background:linear-gradient(135deg,#1a3a6b,#2563a8);color:white;}
+.region-card:nth-child(2){background:linear-gradient(135deg,#2563a8,#3b82cc);color:white;}
+.region-card:nth-child(3){background:linear-gradient(135deg,#2d6a4f,#40916c);color:white;}
+.region-card:nth-child(4){background:linear-gradient(135deg,#c0771a,#d4a00a);color:white;}
+.region-card:nth-child(5){background:linear-gradient(135deg,#c0392b,#e74c3c);color:white;}
+.region-name{font-size:.72rem;font-weight:600;letter-spacing:.06em;opacity:.8;margin-bottom:6px;}
+.region-count{font-family:'Fraunces',serif;font-size:2rem;font-weight:900;line-height:1;}
+.region-pct{font-size:.75rem;opacity:.7;margin-top:2px;}
+
+/* TABLE */
+.table-controls{display:flex;gap:12px;align-items:center;margin-bottom:16px;flex-wrap:wrap;}
+.search-box{padding:8px 16px 8px 36px;border:1.5px solid #e0e6ef;border-radius:24px;font-size:.83rem;font-family:'DM Sans',sans-serif;outline:none;width:220px;background:#fff url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='14' height='14' viewBox='0 0 24 24' fill='none' stroke='%238a9bb0' stroke-width='2'%3E%3Ccircle cx='11' cy='11' r='8'/%3E%3Cpath d='m21 21-4.35-4.35'/%3E%3C/svg%3E") no-repeat 12px center;transition:border-color .2s;}
+.search-box:focus{border-color:var(--navy);}
+.filter-btn{padding:7px 16px;border-radius:20px;border:1.5px solid #e0e6ef;background:#fff;cursor:pointer;font-size:.78rem;font-weight:600;color:#8a9bb0;font-family:'DM Sans',sans-serif;transition:all .15s;}
+.filter-btn.active{background:var(--navy);color:#fff;border-color:var(--navy);}
+.count-label{margin-left:auto;font-size:.78rem;color:#8a9bb0;}
+.table-wrap{overflow-x:auto;max-height:520px;overflow-y:auto;}
+table{width:100%;border-collapse:collapse;font-size:.82rem;}
+thead th{position:sticky;top:0;z-index:2;background:#f0f4fa;color:var(--navy);font-weight:700;padding:10px 12px;text-align:left;font-size:.73rem;text-transform:uppercase;letter-spacing:.06em;border-bottom:2px solid #d0d9ec;cursor:pointer;white-space:nowrap;}
+thead th:hover{background:#e4ecf8;}
+tbody tr{border-bottom:1px solid #eef2fa;transition:background .1s;}
+tbody tr:hover{background:#f7faff;}
+tbody td{padding:9px 12px;}
+.rank-cell{width:34px;height:34px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:.78rem;margin:0 auto;}
+.rank-1{background:#c9a227;color:white;} .rank-2{background:#8a9bb0;color:white;} .rank-3{background:#a56129;color:white;} .rank-n{background:#f0f4fa;color:#6b7c93;}
+.bar-wrap{display:flex;align-items:center;gap:8px;}
+.mini-bar-bg{flex:1;height:6px;background:#e8edf5;border-radius:3px;overflow:hidden;min-width:60px;}
+.mini-bar{height:100%;border-radius:3px;background:linear-gradient(90deg,var(--navy),var(--steel));}
+.t-val{font-weight:600;font-size:.8rem;} .t-dash{color:#ccc;}
+.note{background:#f0f4fa;border-left:3px solid var(--steel);padding:10px 16px;border-radius:0 8px 8px 0;font-size:.78rem;color:#6b7c93;margin-top:12px;font-style:italic;}
+
+/* SESSION DIR */
+.sess-block{margin-bottom:20px;background:#fff;border-radius:16px;overflow:hidden;box-shadow:var(--shadow);}
+.sess-hdr{padding:18px 24px;display:flex;align-items:center;justify-content:space-between;}
+.sess-hdr-left .badge{font-size:.7rem;font-weight:700;letter-spacing:.12em;text-transform:uppercase;opacity:.6;margin-bottom:4px;}
+.sess-hdr-left .stitle{font-family:'Fraunces',serif;font-size:1.1rem;font-weight:700;color:#fff;}
+.sess-hdr-left .scoord{font-size:.73rem;color:rgba(255,255,255,.6);margin-top:4px;}
+.sess-hdr-right{text-align:right;flex-shrink:0;margin-left:20px;}
+.sess-hdr-right .big{font-family:'Fraunces',serif;font-size:2rem;font-weight:900;color:#fff;}
+.sess-hdr-right .sm{font-size:.72rem;color:rgba(255,255,255,.6);}
+.sess-body{padding:14px 20px;}
+.sess-count{margin-left:auto;font-size:.72rem;font-weight:700;color:#fff;background:#607d8b;border-radius:10px;padding:1px 8px;white-space:nowrap;flex-shrink:0;}
+.sess-item{display:flex;gap:10px;align-items:baseline;padding:6px 10px;border-radius:6px;font-size:.8rem;margin-bottom:3px;background:#f8faff;}
+.sess-id{font-weight:700;min-width:36px;} .sess-title{color:#3a4a5a;line-height:1.3;}
+
+/* SECTION HDR */
+.section-hdr{margin-bottom:22px;margin-top:36px;}
+.section-hdr:first-child{margin-top:0;}
+.section-label{font-size:.68rem;font-weight:700;letter-spacing:.16em;text-transform:uppercase;color:#8a9bb0;margin-bottom:4px;}
+.section-title{font-family:'Fraunces',serif;font-size:1.5rem;font-weight:700;color:var(--navy);}
+
+
+/* ORG TAB */
+.org-type-badge{display:inline-block;padding:2px 10px;border-radius:10px;font-size:.72rem;font-weight:700;color:white;}
+.ot-academic{background:#1a3a6b;} .ot-government{background:#c0392b;} .ot-industry{background:#c0771a;}
+.ot-society{background:#2d6a4f;} .ot-research{background:#6b3a9e;} .ot-unknown{background:#607d8b;}
+.org-kpi-grid{display:grid;grid-template-columns:repeat(6,1fr);gap:14px;margin-bottom:28px;}
+.org-kpi{border-radius:12px;padding:16px 12px;text-align:center;color:white;position:relative;overflow:hidden;}
+.org-kpi::before{content:'';position:absolute;right:-10px;top:-10px;width:50px;height:50px;border-radius:50%;background:rgba(255,255,255,.1);}
+.org-kpi-label{font-size:.68rem;font-weight:600;letter-spacing:.06em;text-transform:uppercase;opacity:.8;margin-bottom:6px;}
+.org-kpi-val{font-family:'Fraunces',serif;font-size:2.2rem;font-weight:900;line-height:1;}
+.org-kpi-sub{font-size:.68rem;opacity:.65;margin-top:4px;line-height:1.3;}
+.org-filter-row{display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-bottom:14px;}
+.type-filter{padding:6px 14px;border-radius:18px;border:1.5px solid #e0e6ef;background:#fff;
+  cursor:pointer;font-size:.78rem;font-weight:600;font-family:'DM Sans',sans-serif;color:#8a9bb0;transition:all .15s;}
+.type-filter:hover{border-color:var(--navy);color:var(--navy);}
+.type-filter.tf-active{color:#fff;border-color:transparent;}
+.tf-all.tf-active{background:var(--navy);}
+.tf-academic.tf-active{background:#1a3a6b;} .tf-government.tf-active{background:#c0392b;}
+.tf-industry.tf-active{background:#c0771a;} .tf-society.tf-active{background:#2d6a4f;}
+.tf-research.tf-active{background:#6b3a9e;} .tf-unknown.tf-active{background:#607d8b;}
+.highlight-row{background:#fffbf0!important;}
+
+
+/* AMRITA TAB */
+.amrita-hero{background:linear-gradient(135deg,#c0392b,#e74c3c);border-radius:16px;padding:24px 28px;color:white;margin-bottom:24px;position:relative;overflow:hidden;}
+.amrita-hero::before{content:'';position:absolute;right:-30px;top:-30px;width:120px;height:120px;border-radius:50%;background:rgba(255,255,255,.08);}
+.amrita-hero-title{font-family:'Fraunces',serif;font-size:1.6rem;font-weight:900;margin-bottom:6px;position:relative;z-index:1;}
+.amrita-hero-sub{font-size:.85rem;opacity:.8;margin-bottom:16px;position:relative;z-index:1;}
+.amrita-stats{display:flex;gap:24px;flex-wrap:wrap;position:relative;z-index:1;}
+.amrita-stat-val{font-family:'Fraunces',serif;font-size:2.2rem;font-weight:900;line-height:1;}
+.amrita-stat-label{font-size:.7rem;opacity:.7;text-transform:uppercase;letter-spacing:.08em;}
+.paper-card{background:#fff;border-radius:12px;padding:16px 18px;margin-bottom:10px;box-shadow:0 2px 12px rgba(15,25,35,.06);border-left:4px solid #ccc;transition:box-shadow .2s;}
+.paper-card:hover{box-shadow:0 4px 20px rgba(15,25,35,.12);}
+.paper-card.t1{border-left-color:#1a3a6b;}.paper-card.t2{border-left-color:#2563a8;}
+.paper-card.t3{border-left-color:#2d6a4f;}.paper-card.t4{border-left-color:#c0771a;}
+.paper-card.t5{border-left-color:#c0392b;}.paper-card.t6{border-left-color:#6b3a9e;}
+.paper-title{font-family:'Fraunces',serif;font-size:.95rem;font-weight:700;color:#1a3a6b;margin-bottom:6px;line-height:1.3;}
+.paper-authors{font-size:.8rem;color:#4a6080;margin-bottom:4px;}
+.paper-aff{font-size:.75rem;color:#8a9bb0;font-style:italic;}
+.paper-theme-badge{display:inline-block;padding:2px 10px;border-radius:10px;font-size:.7rem;font-weight:700;color:white;float:right;margin-top:-2px;}
+.paper-filter-row{display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-bottom:16px;}
+
+@keyframes fadeUp{from{opacity:0;transform:translateY(14px);}to{opacity:1;transform:translateY(0);}}
+@media(max-width:1100px){
+  .kpi-grid,.theme-grid{grid-template-columns:repeat(2,1fr);}
+  .chart-row.two,.chart-row.two-eq{grid-template-columns:1fr;}
+  .region-grid{grid-template-columns:repeat(3,1fr);}
+  .main,.hero,.nav-inner{padding-left:20px;padding-right:20px;}
+}
+</style>
+</head>
+<body>
+
+<div class="hero">
+  <div class="hero-inner">
+    <div class="hero-eyebrow">International Consortium on Landslides · ICL</div>
+    <div class="hero-title">7th World Landslide Forum<br><em>Abstract Statistics</em></div>
+    <div class="hero-sub">Amrita Vishwa Vidyapeetham, Faridabad, India · 23–27 November 2026</div>
+    <div class="hero-pills">
+      <div class="pill"><strong>461</strong> Abstracts</div>
+      <div class="pill"><strong>47</strong> Countries</div>
+      <div class="pill"><strong>6</strong> Themes</div>
+      <div class="pill"><strong>44</strong> Sessions</div>
+      <div class="pill">wlf7.org</div>
+    </div>
+  </div>
+</div>
+
+<div class="nav-wrap">
+  <div class="nav-inner">
+    <button class="nav-tab active" onclick="showTab('overview',this)">Overview</button>
+    <button class="nav-tab" onclick="showTab('themes',this)">Themes & Sessions</button>
+    <button class="nav-tab" onclick="showTab('countries',this)">Country Table</button>
+    <button class="nav-tab" onclick="showTab('charts',this)">Charts</button>
+    <button class="nav-tab" onclick="showTab('organisations',this)">Organisations</button>
+    <button class="nav-tab" onclick="showTab('amrita',this)">Amrita Papers</button>
+  </div>
+</div>
+
+<div class="main">
+
+<!-- OVERVIEW -->
+<div class="section active" id="overview">
+  <div class="kpi-grid">
+    <div class="kpi-card"><div class="kpi-label">Total Abstracts</div><div class="kpi-value">461</div><div class="kpi-sub">Submitted across all themes</div></div>
+    <div class="kpi-card"><div class="kpi-label">Countries</div><div class="kpi-value">47</div><div class="kpi-sub">Unique (split affiliations)</div></div>
+    <div class="kpi-card"><div class="kpi-label">India — Top Country</div><div class="kpi-value">196</div><div class="kpi-sub">42.3% of all associations</div></div>
+    <div class="kpi-card"><div class="kpi-label">Largest Theme</div><div class="kpi-value">T4</div><div class="kpi-sub">Hazard Mapping · 131 abstracts</div></div>
+  </div>
+
+  <div class="section-hdr"><div class="section-label">Distribution</div><div class="section-title">Themes at a Glance</div></div>
+  <div class="theme-grid" id="themeGrid"></div>
+
+  <div class="section-hdr"><div class="section-label">Geography</div><div class="section-title">Regional Breakdown</div></div>
+  <div class="region-grid" id="regionGrid"></div>
+
+  <div class="chart-row two" style="margin-top:28px">
+    <div class="card">
+      <div class="card-header"><div class="card-title">Theme Distribution</div><div class="card-sub">461 total · incl. No Theme Assigned</div></div>
+      <div class="chart-wrap" style="height:280px"><canvas id="themePie"></canvas></div>
+    </div>
+    <div class="card">
+      <div class="card-header"><div class="card-title">Abstracts by Region</div><div class="card-sub">Country-association totals</div></div>
+      <div class="chart-wrap" style="height:280px"><canvas id="regionBar"></canvas></div>
+    </div>
+  </div>
+</div>
+
+<!-- THEMES -->
+<div class="section" id="themes">
+  <div class="section-hdr"><div class="section-label">Programme</div><div class="section-title">Themes & Sessions Directory</div></div>
+  <div id="sessionDir"></div>
+</div>
+
+<!-- COUNTRIES -->
+<div class="section" id="countries">
+  <div class="section-hdr"><div class="section-label">Participation</div><div class="section-title">Country × Abstract × Theme</div></div>
+  <div class="card">
+    <div class="table-controls">
+      <input class="search-box" type="text" placeholder="Search country…" oninput="filterTable(this.value)">
+      <button class="filter-btn active" onclick="sortBy('count',this)">By Count ↓</button>
+      <button class="filter-btn" onclick="sortBy('alpha',this)">A–Z</button>
+      <span class="count-label" id="rowCount">47 countries</span>
+    </div>
+    <div class="table-wrap">
+      <table>
+        <thead><tr>
+          <th style="width:44px;text-align:center">#</th>
+          <th>Country</th>
+          <th>Abstracts</th>
+          <th>Share</th>
+          <th style="color:var(--t1)">T1</th>
+          <th style="color:var(--t2)">T2</th>
+          <th style="color:var(--t3)">T3</th>
+          <th style="color:var(--t4)">T4</th>
+          <th style="color:var(--t5)">T5</th>
+          <th style="color:var(--t6)">T6</th>
+          <th style="color:var(--nt)">NTA</th>
+        </tr></thead>
+        <tbody id="tableBody"></tbody>
+      </table>
+    </div>
+    <div class="note">NTA = No Theme Assigned (21 abstracts). Multi-country affiliations are split — total associations (463) may exceed submitted abstracts (461).</div>
+  </div>
+</div>
+
+<!-- CHARTS -->
+<div class="section" id="charts">
+  <div class="section-hdr"><div class="section-label">Visualisations</div><div class="section-title">All Charts</div></div>
+  <div class="chart-row one">
+    <div class="card">
+      <div class="card-header"><div class="card-title">Top 20 Countries by Abstracts</div><div class="card-sub">First-author associations, split affiliations counted per country</div></div>
+      <div class="chart-wrap" style="height:420px"><canvas id="top20Bar"></canvas></div>
+    </div>
+  </div>
+  <div class="chart-row two-eq">
+    <div class="card">
+      <div class="card-header"><div class="card-title">Top 3 Countries Across Themes</div><div class="card-sub">India · Italy · Japan per theme</div></div>
+      <div class="chart-wrap" style="height:300px"><canvas id="crossTheme"></canvas></div>
+    </div>
+    <div class="card">
+      <div class="card-header"><div class="card-title">Theme Distribution</div><div class="card-sub">% of 461 abstracts</div></div>
+      <div class="chart-wrap" style="height:300px"><canvas id="themePie2"></canvas></div>
+    </div>
+  </div>
+</div>
+
+
+<!-- ORGANISATIONS -->
+<div class="section" id="organisations">
+  <div class="section-hdr"><div class="section-label">Affiliation Analysis</div><div class="section-title">Organisations by Country & Type</div></div>
+  
+  <!-- KPI cards -->
+  <div class="org-kpi-grid" id="orgKpiGrid"></div>
+
+  <!-- Charts row -->
+  <div class="chart-row two-eq" style="margin-bottom:28px">
+    <div class="card">
+      <div class="card-header"><div class="card-title">Organisation Type Distribution</div><div class="card-sub">461 papers — 456 classified + 5 untraced</div></div>
+      <div class="chart-wrap" style="height:280px"><canvas id="orgTypePie"></canvas></div>
+    </div>
+    <div class="card">
+      <div class="card-header"><div class="card-title">Papers by Region & Org Type</div><div class="card-sub">Stacked — Academic vs Government vs Other</div></div>
+      <div class="chart-wrap" style="height:280px"><canvas id="orgRegionStack"></canvas></div>
+    </div>
+  </div>
+
+  <!-- Top orgs bar -->
+  <div class="chart-row one" style="margin-bottom:28px">
+    <div class="card">
+      <div class="card-header">
+        <div class="card-title">Top 20 Organisations by Papers Submitted</div>
+        <div class="card-sub">First-author affiliation count · coloured by type</div>
+      </div>
+      <div class="chart-wrap" style="height:440px"><canvas id="topOrgsBar"></canvas></div>
+    </div>
+  </div>
+
+  <!-- National bodies spotlight -->
+  <div class="chart-row two-eq" style="margin-bottom:28px">
+    <div class="card">
+      <div class="card-header"><div class="card-title">National Geological Surveys & Bodies</div><div class="card-sub">Papers from major national geoscience agencies</div></div>
+      <div class="chart-wrap" style="height:260px"><canvas id="geoSurveyBar"></canvas></div>
+    </div>
+    <div class="card">
+      <div class="card-header"><div class="card-title">Societies, NGOs & Professional Bodies</div><div class="card-sub">14 papers from civil society / professional orgs</div></div>
+      <div class="chart-wrap" style="height:260px"><canvas id="societyBar"></canvas></div>
+    </div>
+  </div>
+
+
+  <!-- Top 40 Organisations table -->
+  <div class="section-hdr" style="margin-top:8px"><div class="section-label">Rankings</div><div class="section-title">Top 40 Organisations by Papers</div></div>
+  <div class="card">
+    <div class="org-filter-row" style="flex-wrap:wrap;gap:6px">
+      <input class="search-box" type="text" id="topOrgSearch" placeholder="Search organisation…" oninput="filterTopOrgsTable()" style="min-width:200px">
+      <button class="type-filter tf-all tf-active" onclick="setTopOrgFilter('all',this)">All Types</button>
+      <button class="type-filter tf-academic" onclick="setTopOrgFilter('Academic',this)">Academic</button>
+      <button class="type-filter tf-government" onclick="setTopOrgFilter('Government',this)">Government</button>
+      <button class="type-filter tf-industry" onclick="setTopOrgFilter('Industry',this)">Industry</button>
+      <button class="type-filter tf-society" onclick="setTopOrgFilter('Society/NGO',this)">Society/NGO</button>
+      <button class="type-filter tf-research" onclick="setTopOrgFilter('Research Institute',this)">Research Inst.</button>
+      <span class="count-label" id="topOrgCount">40 organisations</span>
+    </div>
+    <div class="table-wrap">
+      <table>
+        <thead><tr>
+          <th style="width:38px;text-align:center">#</th>
+          <th>Organisation</th>
+          <th>Country</th>
+          <th>Type</th>
+          <th style="text-align:center">Papers</th>
+        </tr></thead>
+        <tbody id="topOrgTableBody"></tbody>
+      </table>
+    </div>
+    <div class="note">Top organisations by first-author affiliation count. 40 orgs shown; ties at 2 papers ranked alphabetically. ‡ Country shown as listed in dataset.</div>
+  </div>
+
+  <!-- Country × Type searchable table -->
+  <div class="section-hdr" style="margin-top:8px"><div class="section-label">Breakdown</div><div class="section-title">Country × Organisation Type</div></div>
+  <div class="card">
+    <div class="org-filter-row">
+      <input class="search-box" type="text" id="orgSearch" placeholder="Search country…" oninput="filterOrgTable()">
+      <button class="type-filter tf-all tf-active" onclick="setTypeFilter('all',this)">All Types</button>
+      <button class="type-filter tf-academic" onclick="setTypeFilter('academic',this)">Academic</button>
+      <button class="type-filter tf-government" onclick="setTypeFilter('government',this)">Government</button>
+      <button class="type-filter tf-industry" onclick="setTypeFilter('industry',this)">Industry</button>
+      <button class="type-filter tf-society" onclick="setTypeFilter('society',this)">Society/NGO</button>
+      <button class="type-filter tf-research" onclick="setTypeFilter('research',this)">Research Inst.</button>
+      <span class="count-label" id="orgRowCount">45 countries</span>
+    </div>
+    <div class="table-wrap">
+      <table>
+        <thead><tr>
+          <th style="width:38px;text-align:center">#</th>
+          <th onclick="sortOrgTable('country')" style="cursor:pointer">Country ↕</th>
+          <th onclick="sortOrgTable('total')" style="cursor:pointer">Total ↕</th>
+          <th style="color:#1a3a6b">Academic</th>
+          <th style="color:#c0392b">Government</th>
+          <th style="color:#c0771a">Industry</th>
+          <th style="color:#2d6a4f">Society/NGO</th>
+          <th style="color:#6b3a9e">Research</th>
+          <th style="color:#607d8b">Unknown</th>
+        </tr></thead>
+        <tbody id="orgTableBody"></tbody>
+      </table>
+    </div>
+    <div class="note">
+      461 submitted abstracts — 456 classified by affiliation + 5 untraced (Unknown) by first-author affiliation. 5 papers not present in the author details file.
+      <strong>NIDM and SDMAS do not appear as first-author affiliations in this dataset</strong> — they may appear as co-author institutions.
+      Amrita Vishwa Vidyapeetham (23) is the host institution. GSI = Geological Survey of India (21 papers).
+    </div>
+  </div>
+
+  <!-- Full Org Directory -->
+  <div class="section-hdr" style="margin-top:8px"><div class="section-label">Full Directory</div><div class="section-title">All Organisations by Type</div></div>
+  <div class="card" style="padding:0">
+    <div class="org-filter-row" style="padding:16px 20px 0;flex-wrap:wrap;gap:6px;border-bottom:1px solid #e8eef7">
+      <input class="search-box" type="text" id="dirSearch" placeholder="Search organisation or country…" oninput="filterOrgDir()" style="min-width:220px">
+      <button class="type-filter tf-all tf-active" id="dirAll" onclick="setDirFilter('all',this)">All</button>
+      <button class="type-filter tf-academic" onclick="setDirFilter('Academic',this)">Academic</button>
+      <button class="type-filter tf-government" onclick="setDirFilter('Government',this)">Government</button>
+      <button class="type-filter tf-industry" onclick="setDirFilter('Industry',this)">Industry</button>
+      <button class="type-filter tf-society" onclick="setDirFilter('Society/NGO',this)">Society/NGO</button>
+      <button class="type-filter tf-research" onclick="setDirFilter('Research Institute',this)">Research Inst.</button>
+      <span class="count-label" id="dirCount"></span>
+    </div>
+    <div id="orgDirBody" style="max-height:520px;overflow-y:auto"></div>
+    <div class="note" style="margin-top:0;border-top:1px solid #e8eef7">Affiliation strings as stated in submitted abstracts · sub-units of the same institution appear separately · 450 papers with classified affiliations</div>
+  </div>
+</div>
+
+<!-- AMRITA PAPERS -->
+<div class="section" id="amrita">
+  <div class="amrita-hero">
+    <div class="amrita-hero-title">Amrita Vishwa Vidyapeetham</div>
+    <div class="amrita-hero-sub">Host Institution of WLF7 · Faridabad, India · 23-27 November 2026</div>
+    <div class="amrita-stats">
+      <div class="amrita-stat"><div class="amrita-stat-val">25</div><div class="amrita-stat-label">Papers (incl. co-authored)</div></div>
+      <div class="amrita-stat"><div class="amrita-stat-val">25</div><div class="amrita-stat-label">Papers submitted</div></div>
+      <div class="amrita-stat"><div class="amrita-stat-val">5.4%</div><div class="amrita-stat-label">Of All 461 Papers</div></div>
+      <div class="amrita-stat"><div class="amrita-stat-val">6</div><div class="amrita-stat-label">Themes Covered</div></div>
+    </div>
+  </div>
+  <div class="chart-row two-eq" style="margin-bottom:28px">
+    <div class="card">
+      <div class="card-header"><div class="card-title">Papers by Theme</div><div class="card-sub">24 Amrita-affiliated papers across all 6 themes</div></div>
+      <div class="chart-wrap" style="height:260px"><canvas id="amritaThemeBar"></canvas></div>
+    </div>
+    <div class="card">
+      <div class="card-header"><div class="card-title">Papers by Amrita Unit</div><div class="card-sub">Primary affiliated centre or department</div></div>
+      <div class="chart-wrap" style="height:260px"><canvas id="amritaUnitBar"></canvas></div>
+    </div>
+  </div>
+  <div class="section-hdr"><div class="section-label">Paper List</div><div class="section-title">All 24 Amrita-Affiliated Abstracts</div></div>
+  <div class="paper-filter-row">
+    <input class="search-box" type="text" id="amritaSearch" placeholder="Search title or author..." oninput="filterAmritaPapers()">
+    <button class="filter-btn active" onclick="filterAmritaTheme('all',this)">All</button>
+    <button class="filter-btn" onclick="filterAmritaTheme('Theme 1',this)" style="border-color:#1a3a6b;color:#1a3a6b">T1</button>
+    <button class="filter-btn" onclick="filterAmritaTheme('Theme 2',this)" style="border-color:#2563a8;color:#2563a8">T2</button>
+    <button class="filter-btn" onclick="filterAmritaTheme('Theme 3',this)" style="border-color:#2d6a4f;color:#2d6a4f">T3</button>
+    <button class="filter-btn" onclick="filterAmritaTheme('Theme 4',this)" style="border-color:#c0771a;color:#c0771a">T4</button>
+    <button class="filter-btn" onclick="filterAmritaTheme('Theme 5',this)" style="border-color:#c0392b;color:#c0392b">T5</button>
+    <button class="filter-btn" onclick="filterAmritaTheme('Theme 6',this)" style="border-color:#6b3a9e;color:#6b3a9e">T6</button>
+    <span class="count-label" id="amritaPaperCount">25 papers</span>
+  </div>
+  <div id="amritaPaperList"></div>
+</div>
+
+</div>
+
+<script>
+const TC = ["#1a3a6b","#2563a8","#2d6a4f","#c0771a","#c0392b","#6b3a9e","#607d8b"];
+const RC = ["#1a3a6b","#2563a8","#2d6a4f","#c0771a","#c0392b"];
+const FF = "'DM Sans', sans-serif";
+
+const COUNTRIES = [
+  {rank:1,country:"India",count:196,share:42.3,t1:20,t2:48,t3:24,t4:62,t5:23,t6:12,nta:7},
+  {rank:2,country:"Italy",count:52,share:11.2,t1:9,t2:17,t3:9,t4:11,t5:6,t6:0,nta:1},
+  {rank:3,country:"Japan",count:19,share:4.1,t1:3,t2:4,t3:4,t4:6,t5:0,t6:1,nta:1},
+  {rank:4,country:"Poland",count:16,share:3.5,t1:0,t2:4,t3:5,t4:4,t5:2,t6:0,nta:1},
+  {rank:5,country:"Nepal",count:14,share:3.0,t1:6,t2:0,t3:2,t4:6,t5:0,t6:0,nta:0},
+  {rank:6,country:"United Kingdom",count:14,share:3.0,t1:3,t2:3,t3:1,t4:5,t5:2,t6:0,nta:1},
+  {rank:7,country:"Sri Lanka",count:12,share:2.6,t1:5,t2:3,t3:1,t4:3,t5:0,t6:0,nta:0},
+  {rank:8,country:"Switzerland",count:12,share:2.6,t1:1,t2:3,t3:2,t4:5,t5:1,t6:0,nta:0},
+  {rank:9,country:"China",count:10,share:2.2,t1:3,t2:3,t3:2,t4:1,t5:1,t6:0,nta:0},
+  {rank:10,country:"USA",count:9,share:1.9,t1:2,t2:3,t3:0,t4:4,t5:0,t6:0,nta:1},
+  {rank:11,country:"Bangladesh",count:8,share:1.7,t1:1,t2:2,t3:0,t4:2,t5:0,t6:2,nta:1},
+  {rank:12,country:"Canada",count:7,share:1.5,t1:2,t2:0,t3:2,t4:3,t5:0,t6:0,nta:0},
+  {rank:13,country:"Colombia",count:7,share:1.5,t1:0,t2:3,t3:0,t4:4,t5:0,t6:0,nta:0},
+  {rank:14,country:"Spain",count:7,share:1.5,t1:1,t2:1,t3:2,t4:1,t5:0,t6:0,nta:2},
+  {rank:15,country:"Czech Republic",count:6,share:1.3,t1:1,t2:2,t3:0,t4:3,t5:0,t6:0,nta:0},
+  {rank:16,country:"Germany",count:6,share:1.3,t1:0,t2:2,t3:1,t4:2,t5:0,t6:1,nta:0},
+  {rank:17,country:"Indonesia",count:6,share:1.3,t1:3,t2:1,t3:0,t4:2,t5:0,t6:0,nta:0},
+  {rank:18,country:"New Zealand",count:6,share:1.3,t1:2,t2:1,t3:1,t4:1,t5:0,t6:0,nta:1},
+  {rank:19,country:"Austria",count:5,share:1.1,t1:0,t2:3,t3:0,t4:2,t5:0,t6:0,nta:0},
+  {rank:20,country:"Russia",count:5,share:1.1,t1:2,t2:1,t3:0,t4:1,t5:1,t6:0,nta:0},
+  {rank:21,country:"Philippines",count:4,share:0.9,t1:0,t2:0,t3:1,t4:0,t5:1,t6:0,nta:2},
+  {rank:22,country:"North Macedonia",count:3,share:0.6,t1:2,t2:0,t3:0,t4:0,t5:1,t6:0,nta:0},
+  {rank:23,country:"Netherlands",count:3,share:0.6,t1:0,t2:2,t3:1,t4:0,t5:0,t6:0,nta:0},
+  {rank:24,country:"Vietnam",count:3,share:0.6,t1:1,t2:1,t3:1,t4:0,t5:0,t6:0,nta:1},
+  {rank:25,country:"Belgium",count:2,share:0.4,t1:0,t2:0,t3:1,t4:0,t5:0,t6:1,nta:0},
+  {rank:26,country:"Brazil",count:2,share:0.4,t1:0,t2:0,t3:0,t4:2,t5:0,t6:0,nta:0},
+  {rank:27,country:"Denmark",count:2,share:0.4,t1:0,t2:2,t3:0,t4:0,t5:0,t6:0,nta:0},
+  {rank:28,country:"Ethiopia",count:2,share:0.4,t1:1,t2:0,t3:0,t4:0,t5:0,t6:0,nta:1},
+  {rank:29,country:"Greenland",count:2,share:0.4,t1:0,t2:2,t3:0,t4:0,t5:0,t6:0,nta:0},
+  {rank:30,country:"Norway",count:2,share:0.4,t1:1,t2:1,t3:0,t4:0,t5:0,t6:0,nta:0},
+  {rank:31,country:"Syria",count:2,share:0.4,t1:0,t2:2,t3:0,t4:0,t5:0,t6:0,nta:0},
+  {rank:32,country:"Taiwan",count:2,share:0.4,t1:1,t2:0,t3:0,t4:0,t5:0,t6:1,nta:0},
+  {rank:33,country:"Thailand",count:2,share:0.4,t1:0,t2:2,t3:0,t4:0,t5:0,t6:0,nta:0},
+  {rank:34,country:"Argentina",count:1,share:0.2,t1:0,t2:0,t3:0,t4:1,t5:0,t6:0,nta:0},
+  {rank:35,country:"Australia",count:1,share:0.2,t1:1,t2:0,t3:0,t4:0,t5:0,t6:0,nta:0},
+  {rank:36,country:"Croatia",count:1,share:0.2,t1:1,t2:0,t3:0,t4:0,t5:0,t6:0,nta:0},
+  {rank:37,country:"Cuba",count:1,share:0.2,t1:0,t2:0,t3:0,t4:1,t5:0,t6:0,nta:0},
+  {rank:38,country:"France",count:1,share:0.2,t1:0,t2:1,t3:0,t4:0,t5:0,t6:0,nta:0},
+  {rank:39,country:"Iran",count:1,share:0.2,t1:1,t2:0,t3:0,t4:0,t5:0,t6:0,nta:0},
+  {rank:40,country:"Iraq",count:1,share:0.2,t1:0,t2:0,t3:0,t4:1,t5:0,t6:0,nta:0},
+  {rank:41,country:"Ivory Coast",count:1,share:0.2,t1:0,t2:0,t3:0,t4:0,t5:0,t6:0,nta:1},
+  {rank:42,country:"Mexico",count:1,share:0.2,t1:0,t2:0,t3:0,t4:0,t5:0,t6:0,nta:1},
+  {rank:43,country:"Nigeria",count:1,share:0.2,t1:0,t2:0,t3:1,t4:0,t5:0,t6:0,nta:0},
+  {rank:44,country:"Republic of Benin",count:1,share:0.2,t1:1,t2:0,t3:0,t4:0,t5:0,t6:0,nta:0},
+  {rank:45,country:"Serbia",count:1,share:0.2,t1:1,t2:0,t3:0,t4:0,t5:0,t6:0,nta:0},
+  {rank:46,country:"Tanzania",count:1,share:0.2,t1:1,t2:0,t3:0,t4:0,t5:0,t6:0,nta:0},
+  {rank:47,country:"Türkiye",count:1,share:0.2,t1:0,t2:1,t3:0,t4:0,t5:0,t6:0,nta:0},
+];
+
+const THEMES = [
+  {name:"Theme 1",title:"Reducing Landslide Disaster Risk",count:77,sessions:6,topCountry:"India",topCount:20},
+  {name:"Theme 2",title:"Remote Sensing, Site Investigation, Monitoring and Early Warning",count:114,sessions:9,topCountry:"India",topCount:48},
+  {name:"Theme 3",title:"Testing, Modeling and Mitigation Techniques",count:64,sessions:9,topCountry:"India",topCount:24},
+  {name:"Theme 4",title:"Landslide Hazard Mapping, Risk Assessment and Management",count:131,sessions:9,topCountry:"India",topCount:62},
+  {name:"Theme 5",title:"Progress in Landslide Science and Applications",count:36,sessions:8,topCountry:"India",topCount:23},
+  {name:"Theme 6",title:"Regional Landslide Case Studies",count:18,sessions:3,topCountry:"India",topCount:12},
+  {name:"No Theme Assigned",title:"Abstracts without theme assignment",count:21,sessions:0,topCountry:"India",topCount:7},
+];
+
+const REGIONS = [{name:"South Asia",count:230},{name:"Europe",count:143},{name:"East & SE Asia",count:47},{name:"Americas",count:28},{name:"Rest of World",count:15}];
+
+const COORDS = {
+  "Theme 1":"Dr. Shinji Sassa · Dr. Irasema Alcántara-Ayala · Dr. Matjaž Mikoš · Dr. Kyoji Sassa",
+  "Theme 2":"Dr. Maneesha Vinodini Ramesh · Dr. Veronica Tofani · Dr. Jan Klimeš",
+  "Theme 3":"Dr. Binod Tiwari · Dr. Sabatino Cuomo · Dr. Beena Ajmera · Dr. S. S. Chandrasekaran",
+  "Theme 4":"Dr. David Huntley · Dr. Biljana Abolmasov · Dr. Mario Parise · Dr. Dhanya M",
+  "Theme 5":"Dr. Željko Arbanas · Dr. Hemalatha Thirugnanam · Dr. Faisal Fathani · Dr. Jonathan Chambers",
+  "Theme 6":"Dr. Chih-Chung Chung · Dr. Xuanmei Fan · Dr. Saibal Ghosh · Dr. Bhupender Singh Negi",
+};
+
+const SESSIONS = {
+  "Theme 1":[["1.1","International Programme on Landslides and Global Activities for KLC2020"],["1.2","Understanding and Reducing Landslide Disaster Risks as Cascading and Multi-Geohazards"],["1.3","Landslides and Society: Cultural, Educational, Ethical, Social and Policy Aspects"],["1.4","Tools and Solutions for Landslide Preparedness and Response in Emergency Scenarios"],["1.5","Grounded Solutions for Community-Centric Landslide Risk Reduction"],["1.6","Structured and Non-Structured Measures for Rainfall-Induced Landslides"]],
+  "Theme 2":[["2.1","Advances in EO-Based Landslide Detection and Monitoring"],["2.2","Toward Continental and Global InSAR Ground Motion Services"],["2.3","Landslide Early Warning Systems: Innovations and Applications"],["2.4","Monitoring Landslide Dynamics at Cultural Heritage Sites"],["2.5","Application of 3GS and Advanced Sensing Technologies for Integrated Monitoring"],["2.6","Landslide Catalogues and Inventories: Advances in Data Collection and Sharing"],["2.7","Geophysical Site Investigation and Monitoring of Landslide-Prone Slopes"],["2.8","Landslides: Map, Measure and Monitor Using Remote Sensing Data"],["2.9","Remote Sensing and Multi-Dimensional Displacement Analysis for Landslide Mapping"]],
+  "Theme 3":[["3.1","Recent Advancement in Laboratory and In-Situ Testing Methods"],["3.2","Recent Advancement on Slope Stability and Deformation Analysis"],["3.3","Recent Advancements in Physical and Numerical Modelling of Landslides and Debris Flows"],["3.4","Recent Advancements in Landslide and Debris Flow Mitigation Techniques"],["3.5","Physical and Numerical Modelling of Landslide–Structure Interaction (LSI)"],["3.6","Nature-Based Solutions for Landslide Mitigation and Slope Resilience"],["3.7","Landslide and Debris Flow Monitoring and Modelling Using Latest Technologies"],["3.8","Linking Geotechnical Testing to Landslide Modelling: Young Researchers' Perspectives"],["3.9","Understanding Landslide Dynamics: Geophysical and Geological Modelling"]],
+  "Theme 4":[["4.1","Landslide Impacts, Vulnerability and Quantitative Risk Assessment"],["4.2","Taming Landslides: Catchment Geomorphology and Landslide Risk Assessment"],["4.3","Cascading and Compounding Landslide Hazards in High Mountain Regions"],["4.4","Rockfalls and Shallow Landslides: Monitoring, Analysis, Modelling and Risk Assessments"],["4.5","Landslide Detection and Mapping in Data-Scarce Environments"],["4.6","Landslide Dams — Characterization, Prediction, and Emergency Management"],["4.7","Landslide Hazard and Risk in Subduction Zones"],["4.8","Spatial Landslide Assessments: Inventory Mapping, Modelling and Scenario-Building"],["4.9","Landslides at the Human–Climate Interface: Science-Policy Dialogue on HKH Region"]],
+  "Theme 5":[["5.1","Landslide Data in Practice: What We Have, What We Need, and Why It Matters"],["5.2","Next-Generation AI Techniques for Advancing Landslide Science"],["5.3","Geosynthetics for Slope Stabilization"],["5.4","Physics-Informed and Hybrid AI for Seismic Hazard Mapping and Forecasting"],["5.5","AI for Landslide Risk and Engineering Geology: From Theory to Practice"],["5.6","UAV, Radars and IoT Approaches for Landslide Studies"],["5.7","Nexus Approach to Understand Landslides Using Open-Source Tools"],["5.8","Landslides in Partially Saturated Slopes"]],
+  "Theme 6":[["6.1","Taiwan Regional Landslides: Investigation, Risk Assessment, and Restoration"],["6.2","Leveraging Landslide Resilience through Local and Indigenous Knowledge"],["6.3","Extreme Weather Events and Changing Landslide Scenario across Indian & South Asian Landmass"]],
+};
+
+const SESSION_COUNTS = {"1.1":18,"1.2":29,"1.3":12,"1.4":4,"1.5":5,"1.6":8,"2.1":13,"2.2":6,"2.3":24,"2.4":8,"2.5":8,"2.6":8,"2.7":8,"2.8":16,"2.9":16,"3.1":3,"3.2":6,"3.3":14,"3.4":2,"3.5":2,"3.6":7,"3.7":14,"3.8":5,"3.9":6,"4.1":16,"4.2":10,"4.3":22,"4.4":9,"4.5":23,"4.6":5,"4.7":1,"4.8":28,"4.9":6,"5.1":15,"5.2":4,"5.4":4,"5.5":1,"5.6":2,"5.7":3,"5.8":5,"6.1":1,"6.2":7,"6.3":4};
+
+// ── RENDER FUNCTIONS ──────────────────────────────────────────
+function renderThemeGrid() {
+  document.getElementById('themeGrid').innerHTML = THEMES.map((t,i)=>`
+    <div class="theme-card">
+      <div class="theme-badge">${t.name}</div>
+      <div class="theme-count">${t.count}</div>
+      <div class="theme-name">${t.title}</div>
+      <div class="theme-meta">
+        ${t.sessions?`<span>${t.sessions} sessions</span>`:''}
+        <span>Top: ${t.topCountry} (${t.topCount})</span>
+      </div>
+    </div>`).join('');
+}
+
+function renderRegionGrid() {
+  const tot = REGIONS.reduce((s,r)=>s+r.count,0);
+  document.getElementById('regionGrid').innerHTML = REGIONS.map(r=>`
+    <div class="region-card">
+      <div class="region-name">${r.name}</div>
+      <div class="region-count">${r.count}</div>
+      <div class="region-pct">${(r.count/tot*100).toFixed(1)}%</div>
+    </div>`).join('');
+}
+
+function renderSessionDir() {
+  const el = document.getElementById('sessionDir');
+  el.innerHTML = THEMES.slice(0,6).map((t,i)=>{
+    const sessions = SESSIONS[t.name]||[];
+    return `<div class="sess-block">
+      <div class="sess-hdr" style="background:${TC[i]}">
+        <div class="sess-hdr-left">
+          <div class="badge">${t.name}</div>
+          <div class="stitle">${t.title}</div>
+          <div class="scoord">${COORDS[t.name]||''}</div>
+        </div>
+        <div class="sess-hdr-right">
+          <div class="big">${t.count}</div>
+          <div class="sm">abstracts · ${sessions.length} sessions</div>
+        </div>
+      </div>
+      <div class="sess-body">
+        ${sessions.map(([id,title])=>{var cnt=SESSION_COUNTS[id];return `<div class="sess-item"><span class="sess-id" style="color:${TC[i]}">${id}</span><span class="sess-title">${title}</span>${cnt?`<span class="sess-count">${cnt} papers</span>`:''}</div>`;}).join('')}
+      </div>
+    </div>`;
+  }).join('') + `<div style="background:#607d8b;border-radius:14px;padding:18px 24px;color:white;display:flex;align-items:center;justify-content:space-between">
+    <div><div style="font-size:.7rem;font-weight:700;letter-spacing:.1em;text-transform:uppercase;opacity:.6;margin-bottom:4px">Unassigned</div>
+    <div style="font-family:'Fraunces',serif;font-size:1rem;font-weight:700">No Theme Assigned</div>
+    <div style="font-size:.78rem;opacity:.7;margin-top:4px">Abstracts without a theme assignment at time of data export</div></div>
+    <div style="font-family:'Fraunces',serif;font-size:2rem;font-weight:900;flex-shrink:0;margin-left:20px">21</div>
+  </div>`;
+}
+
+// ── TABLE ─────────────────────────────────────────────────────
+let currentData = [...COUNTRIES];
+const maxCount = COUNTRIES[0].count;
+const TKEYS = ['t1','t2','t3','t4','t5','t6','nta'];
+
+function renderTable(data) {
+  document.getElementById('tableBody').innerHTML = data.map(c=>{
+    const rc = c.rank===1?'rank-1':c.rank===2?'rank-2':c.rank===3?'rank-3':'rank-n';
+    const bw = Math.round(c.count/maxCount*100);
+    const tcells = TKEYS.map((k,j)=>c[k]>0
+      ?`<td><span class="t-val" style="color:${TC[j]}">${c[k]}</span></td>`
+      :`<td><span class="t-dash">–</span></td>`).join('');
+    return `<tr>
+      <td><div class="rank-cell ${rc}">${c.rank}</div></td>
+      <td style="font-weight:${c.rank<=3?700:400}">${c.country}</td>
+      <td><div class="bar-wrap"><div class="mini-bar-bg"><div class="mini-bar" style="width:${bw}%"></div></div><strong style="min-width:28px;color:var(--navy)">${c.count}</strong></div></td>
+      <td style="color:#8a9bb0;font-size:.8rem">${c.share}%</td>
+      ${tcells}</tr>`;
+  }).join('');
+  document.getElementById('rowCount').textContent=`${data.length} countr${data.length!==1?'ies':'y'}`;
+}
+
+function filterTable(q) {
+  currentData = COUNTRIES.filter(c=>c.country.toLowerCase().includes(q.toLowerCase()));
+  renderTable(currentData);
+}
+
+function sortBy(mode,btn) {
+  document.querySelectorAll('.filter-btn').forEach(b=>b.classList.remove('active'));
+  if(btn) btn.classList.add('active');
+  renderTable([...currentData].sort((a,b)=>mode==='alpha'?a.country.localeCompare(b.country):b.count-a.count));
+}
+
+// ── CHARTS ───────────────────────────────────────────────────
+let initDone={overview:false,charts:false};
+
+function initOverviewCharts() {
+  if(initDone.overview) return; initDone.overview=true;
+  new Chart(document.getElementById('themePie'),{type:'doughnut',data:{labels:THEMES.map(t=>t.name),datasets:[{data:THEMES.map(t=>t.count),backgroundColor:TC,borderWidth:2,borderColor:'#fff'}]},options:{responsive:true,maintainAspectRatio:false,cutout:'60%',plugins:{legend:{position:'right',labels:{font:{family:FF,size:11},boxWidth:10,padding:10}},tooltip:{callbacks:{label:ctx=>` ${ctx.raw} (${(ctx.raw/461*100).toFixed(1)}%)`}}}}});
+  new Chart(document.getElementById('regionBar'),{type:'bar',data:{labels:REGIONS.map(r=>r.name),datasets:[{label:'Abstracts',data:REGIONS.map(r=>r.count),backgroundColor:RC,borderRadius:6}]},options:{responsive:true,maintainAspectRatio:false,indexAxis:'y',plugins:{legend:{display:false},tooltip:{callbacks:{label:ctx=>` ${ctx.raw} abstracts`}}},scales:{x:{grid:{color:'#f0f4fa'},ticks:{font:{family:FF,size:11}}},y:{ticks:{font:{family:FF,size:11}}}}}});
+}
+
+function initChartsTab() {
+  if(initDone.charts) return; initDone.charts=true;
+  const top20=COUNTRIES.slice(0,20);
+  new Chart(document.getElementById('top20Bar'),{type:'bar',data:{labels:top20.map(c=>c.country),datasets:[{label:'Abstracts',data:top20.map(c=>c.count),backgroundColor:top20.map((_,i)=>i===0?'#c0392b':i===1?'#1a3a6b':i===2?'#2563a8':'#4a7cb5'),borderRadius:5}]},options:{responsive:true,maintainAspectRatio:false,indexAxis:'y',plugins:{legend:{display:false},tooltip:{callbacks:{label:ctx=>` ${ctx.raw} abstracts (${(ctx.raw/461*100).toFixed(1)}%)`}}},scales:{x:{grid:{color:'#f0f4fa'},ticks:{font:{family:FF,size:11}}},y:{ticks:{font:{family:FF,size:10}}}}}});
+  const tk=['t1','t2','t3','t4','t5','t6'];
+  const india=COUNTRIES[0],italy=COUNTRIES[1],japan=COUNTRIES[2];
+  new Chart(document.getElementById('crossTheme'),{type:'bar',data:{labels:['T1','T2','T3','T4','T5','T6'],datasets:[{label:'India',data:tk.map(k=>india[k]),backgroundColor:'#c0392b',borderRadius:4},{label:'Italy',data:tk.map(k=>italy[k]),backgroundColor:'#2563a8',borderRadius:4},{label:'Japan',data:tk.map(k=>japan[k]),backgroundColor:'#2d6a4f',borderRadius:4}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{position:'top',labels:{font:{family:FF,size:11},boxWidth:10}}},scales:{x:{grid:{display:false},ticks:{font:{family:FF,size:11}}},y:{grid:{color:'#f0f4fa'},ticks:{font:{family:FF,size:11}}}}}});
+  new Chart(document.getElementById('themePie2'),{type:'doughnut',data:{labels:THEMES.map(t=>t.name.replace('Theme ','T')),datasets:[{data:THEMES.map(t=>t.count),backgroundColor:TC,borderWidth:2,borderColor:'#fff'}]},options:{responsive:true,maintainAspectRatio:false,cutout:'58%',plugins:{legend:{position:'right',labels:{font:{family:FF,size:11},boxWidth:10,padding:8}},tooltip:{callbacks:{label:ctx=>` ${ctx.raw} (${(ctx.raw/461*100).toFixed(1)}%)`}}}}});
+}
+
+function showTab(id,btn) {
+  document.querySelectorAll('.section').forEach(s=>s.classList.remove('active'));
+  document.querySelectorAll('.nav-tab').forEach(t=>t.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+  btn.classList.add('active');
+  if(id==='overview') setTimeout(initOverviewCharts,50);
+  if(id==='charts') setTimeout(()=>{initOverviewCharts();initChartsTab();},50);
+  if(id==='organisations') setTimeout(initOrgTab,50);
+  if(id==='amrita') setTimeout(initAmritaTab,50);
+}
+
+
+// ── ORG ANALYSIS DATA ──────────────────────────────────────────────────────
+const ORG_COUNTRIES = [{"country": "India", "academic": 111, "government": 54, "research": 3, "industry": 5, "society": 5, "unknown": 2, "total": 180}, {"country": "Italy", "academic": 35, "government": 4, "research": 1, "industry": 5, "society": 0, "unknown": 1, "total": 46}, {"country": "Not Specified", "academic": 25, "government": 6, "industry": 1, "society": 4, "research": 0, "unknown": 8, "total": 44}, {"country": "Japan", "academic": 6, "government": 6, "research": 0, "industry": 5, "society": 0, "unknown": 0, "total": 17}, {"country": "Poland", "academic": 5, "government": 8, "research": 1, "industry": 0, "society": 0, "unknown": 0, "total": 14}, {"country": "Nepal", "academic": 3, "government": 5, "research": 1, "industry": 0, "society": 3, "unknown": 1, "total": 13}, {"country": "Sri Lanka", "academic": 4, "government": 5, "research": 0, "industry": 2, "society": 0, "unknown": 0, "total": 11}, {"country": "China", "academic": 8, "government": 2, "research": 0, "industry": 0, "society": 0, "unknown": 0, "total": 10}, {"country": "Switzerland", "academic": 4, "government": 2, "research": 3, "industry": 1, "society": 0, "unknown": 0, "total": 10}, {"country": "United Kingdom", "academic": 5, "government": 1, "research": 1, "industry": 2, "society": 0, "unknown": 0, "total": 9}, {"country": "USA", "academic": 4, "government": 2, "research": 0, "industry": 0, "society": 0, "unknown": 2, "total": 8}, {"country": "Bangladesh", "academic": 5, "government": 1, "research": 0, "industry": 0, "society": 1, "unknown": 0, "total": 7}, {"country": "Colombia", "academic": 5, "government": 1, "research": 0, "industry": 1, "society": 0, "unknown": 0, "total": 7}, {"country": "Canada", "academic": 0, "government": 3, "research": 0, "industry": 2, "society": 0, "unknown": 1, "total": 6}, {"country": "Indonesia", "academic": 6, "government": 0, "research": 0, "industry": 0, "society": 0, "unknown": 0, "total": 6}, {"country": "Spain", "academic": 4, "government": 0, "research": 0, "industry": 1, "society": 0, "unknown": 0, "total": 5}, {"country": "Russia", "academic": 2, "government": 0, "research": 0, "industry": 2, "society": 0, "unknown": 1, "total": 5}, {"country": "Czech Republic", "academic": 2, "government": 1, "research": 2, "industry": 0, "society": 0, "unknown": 0, "total": 5}, {"country": "New Zealand", "academic": 3, "government": 2, "research": 0, "industry": 0, "society": 0, "unknown": 0, "total": 5}, {"country": "Austria", "academic": 3, "government": 0, "research": 0, "industry": 2, "society": 0, "unknown": 0, "total": 5}, {"country": "Germany", "academic": 2, "government": 0, "research": 1, "industry": 0, "society": 0, "unknown": 2, "total": 5}, {"country": "Philippines", "academic": 2, "government": 0, "research": 0, "industry": 0, "society": 0, "unknown": 2, "total": 4}, {"country": "North Macedonia", "academic": 1, "government": 1, "research": 0, "industry": 1, "society": 0, "unknown": 0, "total": 3}, {"country": "Ethiopia", "academic": 2, "government": 0, "research": 0, "industry": 0, "society": 0, "unknown": 0, "total": 2}, {"country": "Norway", "academic": 0, "government": 2, "research": 0, "industry": 0, "society": 0, "unknown": 0, "total": 2}, {"country": "Taiwan", "academic": 2, "government": 0, "research": 0, "industry": 0, "society": 0, "unknown": 0, "total": 2}, {"country": "Vietnam", "academic": 1, "government": 1, "research": 0, "industry": 0, "society": 0, "unknown": 0, "total": 2}, {"country": "Netherlands", "academic": 2, "government": 0, "research": 0, "industry": 0, "society": 0, "unknown": 0, "total": 2}, {"country": "Belgium", "academic": 1, "government": 1, "research": 0, "industry": 0, "society": 0, "unknown": 0, "total": 2}, {"country": "Brazil", "academic": 2, "government": 0, "research": 0, "industry": 0, "society": 0, "unknown": 0, "total": 2}, {"country": "Iran", "academic": 0, "government": 1, "research": 0, "industry": 0, "society": 0, "unknown": 0, "total": 1}, {"country": "Serbia", "academic": 1, "government": 0, "research": 0, "industry": 0, "society": 0, "unknown": 0, "total": 1}, {"country": "Croatia", "academic": 1, "government": 0, "research": 0, "industry": 0, "society": 0, "unknown": 0, "total": 1}, {"country": "Australia", "academic": 0, "government": 1, "research": 0, "industry": 0, "society": 0, "unknown": 0, "total": 1}, {"country": "Tanzania", "academic": 1, "government": 0, "research": 0, "industry": 0, "society": 0, "unknown": 0, "total": 1}, {"country": "Benin", "academic": 0, "government": 0, "research": 0, "industry": 0, "society": 1, "unknown": 0, "total": 1}, {"country": "France", "academic": 1, "government": 0, "research": 0, "industry": 0, "society": 0, "unknown": 0, "total": 1}, {"country": "Turkey", "academic": 1, "government": 0, "research": 0, "industry": 0, "society": 0, "unknown": 0, "total": 1}, {"country": "Thailand", "academic": 0, "government": 1, "research": 0, "industry": 0, "society": 0, "unknown": 0, "total": 1}, {"country": "Cuba", "academic": 0, "government": 1, "research": 0, "industry": 0, "society": 0, "unknown": 0, "total": 1}, {"country": "Czechia", "academic": 0, "government": 1, "research": 0, "industry": 0, "society": 0, "unknown": 0, "total": 1}, {"country": "Argentina", "academic": 0, "government": 1, "research": 0, "industry": 0, "society": 0, "unknown": 0, "total": 1}, {"country": "Iraq", "academic": 0, "government": 1, "research": 0, "industry": 0, "society": 0, "unknown": 0, "total": 1}, {"country": "C\u00f4te d'Ivoire", "academic": 1, "government": 0, "research": 0, "industry": 0, "society": 0, "unknown": 0, "total": 1}, {"country": "Mexico", "academic": 1, "government": 0, "research": 0, "industry": 0, "society": 0, "unknown": 0, "total": 1}];
+const TOP_ORGS = [["Amrita Vishwa Vidyapeetham", 23, "Academic", "India"], ["Geological Survey of India", 21, "Government", "India"], ["IIT Roorkee", 15, "Academic", "India"], ["NRSC / ISRO", 9, "Government", "India"], ["Polish Geological Institute \u2013 NRI", 8, "Government", "Poland"], ["National Centre for Earth Science Studies (NCESS)", 6, "Government", "India"], ["University of Salerno", 5, "Academic", "Italy"], ["University of Pavia, Pavia", 4, "Academic", "Italy"], ["Universitas Gadjah Mada", 4, "Academic", "Indonesia"], ["University of Florence", 4, "Academic", "Italy"], ["IIT Mandi", 4, "Academic", "India"], ["Geological Survey of Canada / NRCan", 3, "Government", "Canada"], ["State Key Laboratory of Geohazard Prevention and Geoenvironment Protection, Chengdu University of Technology", 3, "Academic", "China"], ["University of Canterbury, Christchurch", 3, "Academic", "New Zealand"], ["Darjeeling Himalaya Initiative (DHI)", 3, "Society/NGO", "India"], ["CoEDMM \u2013 IIT Roorkee", 3, "Academic", "India"], ["Wadia Institute of Himalayan Geology, Dehradun", 3, "Government", "India"], ["National Institute of Maritime, Port and Aviation Technology", 2, "Government", "Japan"], ["University Aldo Moro, Bari", 2, "Academic", "Italy"], ["Institute of Rock Structure and Mechanics, Czech Academy of Sciences", 2, "Research Institute", "Czech Republic"], ["IIT Kharagpur", 2, "Academic", "India"], ["National Central University", 2, "Academic", "Taiwan"], ["Institute of Engineering, Pulchowk Campus", 2, "Government", "Nepal"], ["National Building Research Institute, Colombo", 2, "Government", "Sri Lanka"], ["Kokusai Kogyo Co., Ltd.", 2, "Industry", "Japan"], ["WSL Institute for Snow and Avalanche Research SLF, Davos", 2, "Government", "Unknown"], ["Chang\u2019an University, Xi\u2019an", 2, "Academic", "China"], ["Bioeconomy Science Institute, Palmerston North", 2, "Government", "Unknown"], ["National Institute of Oceanography and Applied Geophysics \u2013 OGS", 2, "Government", "Italy; Syria"], ["Public Works Research Institute, Tsukuba", 2, "Government", "Japan"], ["Charles University, Prague", 2, "Academic", "Czech Republic"], ["Geohazards and Mineral Exploration Division, Geosciences Group", 2, "Government", "India"], ["Delft University of Technology, Delft", 2, "Academic", "Netherlands"], ["University of Bologna, Bologna", 2, "Academic", "Italy"], ["University of North Bengal, Raja Rammohunpur", 2, "Academic", "India"],["Università degli Studi di Milano, Dipartimento di Scienze della Terra", 2, "Academic", "Italy"],["International Environmental Doctoral School, University of Silesia in Katowice", 2, "Academic", "Poland"],["Environment and Climate, University of Zurich", 2, "Academic", "Switzerland"],["CSIR-National Geophysical Research Institute, Hyderabad", 2, "Government", "India"],["University of Pavia, Via Ferrata 1", 2, "Academic", "Italy"]];
+const ORG_TYPE_TOTALS = [["Academic", 268], ["Government", 116], ["Industry", 30], ["Society/NGO", 14], ["Research Institute", 13], ["Unknown/Other", 20]];
+
+const ORG_TYPE_CHART_COLORS = ['#1a3a6b','#c0392b','#c0771a','#2d6a4f','#6b3a9e','#607d8b'];
+let orgTypeFilter = 'all', orgSortKey = 'total', orgSortDir = -1;
+
+function renderOrgKPIs() {
+  const d=[{label:'Academic',val:268,sub:'Universities, IITs, NITs, Colleges',color:'#1a3a6b'},
+    {label:'Government',val:116,sub:'Geological Surveys, National Agencies',color:'#c0392b'},
+    {label:'Industry',val:30,sub:'Private Companies, Consultancies',color:'#c0771a'},
+    {label:'Society/NGO',val:14,sub:'Professional Societies, NGOs, Foundations',color:'#2d6a4f'},
+    {label:'Research Inst.',val:13,sub:'Independent Research Institutes',color:'#6b3a9e'},
+    {label:'Unknown',val:20,sub:'Affiliation unclear / missing',color:'#607d8b'}];
+  document.getElementById('orgKpiGrid').innerHTML = d.map(k=>
+    '<div class="org-kpi" style="background:'+k.color+'"><div class="org-kpi-label">'+k.label+'</div><div class="org-kpi-val">'+k.val+'</div><div class="org-kpi-sub">'+k.sub+'</div></div>'
+  ).join('');
+}
+
+function renderOrgTable(rows) {
+  const maxT = Math.max(...rows.map(r=>r.total));
+  document.getElementById('orgTableBody').innerHTML = rows.map((r,i)=>{
+    const bw = Math.round(r.total/maxT*100);
+    const v = (k,c) => r[k]>0 ? '<span class="t-val" style="color:'+c+'">'+r[k]+'</span>' : '<span class="t-dash">–</span>';
+    const rc = i===0?'rank-1':i===1?'rank-2':i===2?'rank-3':'rank-n';
+    return '<tr><td><div class="rank-cell '+rc+'">'+(i+1)+'</div></td>'
+      +'<td style="font-weight:'+(i<3?700:400)+'">'+r.country+'</td>'
+      +'<td><div class="bar-wrap"><div class="mini-bar-bg"><div class="mini-bar" style="width:'+bw+'%"></div></div>'
+      +'<strong style="color:var(--navy);min-width:28px">'+r.total+'</strong></div></td>'
+      +'<td>'+v('academic','#1a3a6b')+'</td><td>'+v('government','#c0392b')+'</td>'
+      +'<td>'+v('industry','#c0771a')+'</td><td>'+v('society','#2d6a4f')+'</td>'
+      +'<td>'+v('research','#6b3a9e')+'</td><td>'+v('unknown','#607d8b')+'</td></tr>';
+  }).join('');
+  document.getElementById('orgRowCount').textContent = rows.length+' countr'+(rows.length!==1?'ies':'y');
+}
+
+function filterOrgTable() {
+  const q = document.getElementById('orgSearch').value.toLowerCase();
+  let d = ORG_COUNTRIES.filter(r=>r.country.toLowerCase().includes(q));
+  if (orgTypeFilter !== 'all') d = d.filter(r=>(r[orgTypeFilter]||0)>0);
+  d.sort((a,b)=>orgSortDir*(orgSortKey==='country'?a.country.localeCompare(b.country):(b[orgSortKey]||0)-(a[orgSortKey]||0)));
+  renderOrgTable(d);
+}
+
+function setTypeFilter(type,btn) {
+  orgTypeFilter = type;
+  document.querySelectorAll('.type-filter').forEach(b=>b.classList.remove('tf-active'));
+  btn.classList.add('tf-active');
+  filterOrgTable();
+}
+
+function sortOrgTable(key) {
+  if(orgSortKey===key) orgSortDir*=-1; else {orgSortKey=key; orgSortDir=key==='country'?1:-1;}
+  filterOrgTable();
+}
+
+let orgChartsInit = false;
+function initOrgCharts() {
+  if(orgChartsInit) return; orgChartsInit=true;
+
+  // Org type donut
+  new Chart(document.getElementById('orgTypePie'),{type:'doughnut',
+    data:{labels:ORG_TYPE_TOTALS.map(function(x){return x[0];}),
+      datasets:[{data:ORG_TYPE_TOTALS.map(function(x){return x[1];}),
+        backgroundColor:ORG_TYPE_CHART_COLORS,borderWidth:2,borderColor:'#fff'}]},
+    options:{responsive:true,maintainAspectRatio:false,cutout:'60%',
+      plugins:{legend:{position:'right',labels:{font:{family:FF,size:11},boxWidth:10,padding:10}},
+        tooltip:{callbacks:{label:function(ctx){return ' '+ctx.raw+' ('+(ctx.raw/461*100).toFixed(1)+'%)';}}}}
+    }});
+
+  // Stacked region bar
+  var rsd=[{region:'South Asia',academic:121,government:68,industry:7,society:8,research:4,unknown:3},
+    {region:'Europe',academic:104,government:14,industry:12,society:1,research:8,unknown:4},
+    {region:'East & SE Asia',academic:26,government:14,industry:6,society:0,research:0,unknown:1},
+    {region:'Americas',academic:11,government:9,industry:4,society:1,research:1,unknown:2},
+    {region:'Rest of World',academic:6,government:4,industry:0,society:3,research:0,unknown:2}];
+  var skK=['academic','government','industry','society','research','unknown'];
+  var skC=['#1a3a6b','#c0392b','#c0771a','#2d6a4f','#6b3a9e','#607d8b'];
+  var skL=['Academic','Government','Industry','Society/NGO','Research Inst.','Unknown'];
+  new Chart(document.getElementById('orgRegionStack'),{type:'bar',
+    data:{labels:rsd.map(function(r){return r.region;}),
+      datasets:skK.map(function(k,i){return {label:skL[i],data:rsd.map(function(r){return r[k]||0;}),
+        backgroundColor:skC[i],borderRadius:i===skK.length-1?4:0,borderSkipped:false};})},
+    options:{responsive:true,maintainAspectRatio:false,
+      scales:{x:{stacked:true,ticks:{font:{family:FF,size:10}},grid:{display:false}},
+        y:{stacked:true,ticks:{font:{family:FF,size:11}},grid:{color:'#f0f4fa'}}},
+      plugins:{legend:{position:'bottom',labels:{font:{family:FF,size:10},boxWidth:10,padding:8}},
+        tooltip:{mode:'index',intersect:false}}}});
+
+  // Top 20 orgs horizontal bar
+  var top20=TOP_ORGS.slice(0,20);
+  var otcm={Academic:'#1a3a6b',Government:'#c0392b',Industry:'#c0771a','Society/NGO':'#2d6a4f',
+    'Research Institute':'#6b3a9e',Unknown:'#607d8b',Other:'#607d8b'};
+  new Chart(document.getElementById('topOrgsBar'),{type:'bar',
+    data:{labels:top20.map(function(o){return o[0].length>42?o[0].substring(0,42)+'…':o[0];}),
+      datasets:[{label:'Papers',data:top20.map(function(o){return o[1];}),
+        backgroundColor:top20.map(function(o){return otcm[o[2]]||'#607d8b';}),borderRadius:4}]},
+    options:{responsive:true,maintainAspectRatio:false,indexAxis:'y',
+      plugins:{legend:{display:false},tooltip:{callbacks:{
+        title:function(ctx){return TOP_ORGS[ctx[0].dataIndex][0];},
+        label:function(ctx){return ' '+ctx.raw+' papers · '+TOP_ORGS[ctx[0].dataIndex][2]+' · '+TOP_ORGS[ctx[0].dataIndex][3];}}}},
+      scales:{x:{grid:{color:'#f0f4fa'},ticks:{font:{family:FF,size:11}}},
+        y:{ticks:{font:{family:FF,size:10}}}}}});
+
+  // Geological surveys
+  var geoS=[['GSI (India)',21,'#c0392b'],['NRSC/ISRO (India)',9,'#c0771a'],
+    ['Polish Geol. Inst.',8,'#2563a8'],['NCESS (India)',6,'#c0392b'],
+    ['Geol. Survey Canada',3,'#2d6a4f'],['Wadia Inst. (India)',3,'#c0392b'],
+    ['BGS (UK)',1,'#1a3a6b'],['Czech Geol. Survey',1,'#3b82cc'],
+    ['USGS (USA)',1,'#c0771a'],['NGI (Norway)',1,'#607d8b']];
+  new Chart(document.getElementById('geoSurveyBar'),{type:'bar',
+    data:{labels:geoS.map(function(x){return x[0];}),
+      datasets:[{label:'Papers',data:geoS.map(function(x){return x[1];}),
+        backgroundColor:geoS.map(function(x){return x[2];}),borderRadius:4}]},
+    options:{responsive:true,maintainAspectRatio:false,
+      plugins:{legend:{display:false},tooltip:{callbacks:{label:function(ctx){return ' '+ctx.raw+' papers';}}}},
+      scales:{x:{ticks:{font:{family:FF,size:10}},grid:{display:false}},
+        y:{ticks:{font:{family:FF,size:11}},grid:{color:'#f0f4fa'}}}}});
+
+  // Societies & NGOs
+  var socOrgs=[['Darjeeling Himalaya Initiative (India)',3,'#2d6a4f'],
+    ['Community Disaster Risk Mgmt Society',1,'#2d6a4f'],['Sankala Foundation (India)',1,'#2d6a4f'],
+    ['Africa Intl Policy Research Ctr',1,'#2d6a4f'],['People in Need (Nepal)',1,'#40916c'],
+    ['Practical Action (Nepal)',1,'#40916c'],['Small Earth Nepal',1,'#40916c'],
+    ['Geoinfra Research Inst. (Nepal)',1,'#40916c'],['Save the Children (Bangladesh)',1,'#1a3a6b'],
+    ['JVE BENIN (Benin)',1,'#c0771a'],['IUGG Commission',1,'#607d8b'],
+    ['Assoc. Polish Geomorphologists',1,'#2563a8']];
+  new Chart(document.getElementById('societyBar'),{type:'bar',
+    data:{labels:socOrgs.map(function(x){return x[0].length>38?x[0].substring(0,38)+'…':x[0];}),
+      datasets:[{label:'Papers',data:socOrgs.map(function(x){return x[1];}),
+        backgroundColor:socOrgs.map(function(x){return x[2];}),borderRadius:4}]},
+    options:{responsive:true,maintainAspectRatio:false,indexAxis:'y',
+      plugins:{legend:{display:false},tooltip:{callbacks:{
+        title:function(ctx){return socOrgs[ctx[0].dataIndex][0];},
+        label:function(ctx){return ' '+ctx.raw+' paper'+(ctx.raw!==1?'s':'');}}}},
+      scales:{x:{ticks:{font:{family:FF,size:10},stepSize:1},grid:{color:'#f0f4fa'},max:4},
+        y:{ticks:{font:{family:FF,size:10}}}}}});
+}
+
+const ORG_DIRECTORY = {"Academic":[["Center for Wireless Networks & Applications (WNA), Amrita Vishwa Vidyapeetham",12,"India"],["Indian Institute of Technology Roorkee, Roorkee",5,"India"],["Centre of Excellence in Disaster Mitigation and Management, Indian Institute of Technology Roorkee",4,"India"],["University of Pavia, Pavia",4,"Italy"],["University of Salerno",4,"Italy"],["Center for Wireless Networks and Applications, Amrita Vishwa Vidyapeetham",3,"India"],["State Key Laboratory of Geohazard Prevention and Geoenvironment Protection, Chengdu University of Technology",3,"China"],["University of Canterbury, Christchurch",3,"New Zealand"],["Central University of Punjab, Bathinda",2,"India"],["Chang’an University, Xi’an",2,"China"],["Charles University, Prague",2,"Czech Republic"],["Delft University of Technology, Delft",2,"Netherlands"],["Durham University ; CNR Institute for Applied Mathematics and Information Technologies “Enrico Magenes”",2,"Italy; United Kingdom"],["Environment and Climate, University of Zurich",2,"Switzerland"],["Graduate School of Science and Engineering, Ehime University",2,"Japan"],["IIT Bhubaneswar, Odisha",2,"India"],["Indian Institute of Technology Roorkee",2,"India"],["International Environmental Doctoral School, University of Silesia in Katowice",2,"Poland; Vietnam"],["Jagannath University, Dhaka",2,"Bangladesh"],["ML-PREP Project, Caraga State University",2,"Philippines"],["National Central University",2,"Taiwan"],["Panjab University, Chandigarh",2,"India"],["Panjab University, Sector 14",2,"India"],["Sikkim University, Gangtok -",2,"India"],["University Aldo Moro, Bari",2,"Italy"],["University of Bologna, Bologna",2,"Italy"],["University of Florence, Florence",2,"Italy"],["University of North Bengal, Raja Rammohunpur",2,"India"],["University of Pavia, Via Ferrata 1",2,"Italy"],["Università degli Studi di Milano, Dipartimento di Scienze della Terra “Ardito Desio”",2,"Italy"],["AGH University of Krakow, al. A. Mickiewicza 30",1,"Poland"],["Aksum University",1,"Ethiopia"],["Amrita Center for Wireless Networks & Applications (AmritaWNA), Amrita Vishwa Vidyapeetham",1,"India"],["Amrita Center for Wireless Networks and Applications, Amrita Vishwa Vidyapeetham",1,"India"],["Amrita School for Sustainable Futures, Amrita Vishwa Vidyapeetham",1,"India"],["Amrita Vishwa Vidyapeetham Amritapuri, Amritapuri",1,"India"],["Amrita Vishwa Vidyapeetham, Amritapuri",1,"India"],["Amrita Vishwa Vidyapeetham, Amritapuri; Centre for Wireless Networks & Applications",1,"India"],["Beijing Forestry University, Beijing",1,"China"],["Birla Institute of Technology, Mesra",1,"India"],["BOKU University, Institute of Applied Geology",1,"Austria"],["Cardiff University, Main Building",1,"UK"],["Center for Marine Studies/Scientific Support Center for Disasters, Federal University of Paraná",1,"Brazil"],["Center for Wireless Networks and Applications (WNA), Amrita Vishwa Vidyapeetham",1,"India"],["Central University of Kerala, Tejaswini Hills",1,"India"],["Central University of South Bihar, Gayaji",1,"India"],["Centre for Disaster Management, Mizoram University",1,"India"],["Centre for Geoinformatics, The Gandhigram Rural Institute (Deemed to be University)",1,"India"],["Centre for River Basin Management, NIT Calicut",1,"India"],["Centre for the Study of Regional Development, Jawaharlal Nehru University",1,"India"],["Centre of Excellence in Disaster Mitigation & Management, Indian Institute of Technology Roorkee",1,"India"],["Centre of Excellence in Disaster Mitigation and Management (CoEDMM), Indian Institute of Technology",1,"India"],["Centre of Excellence in Disaster Mitigation and Management (CoEDMM), Indian Institute of Technology Roorkee",1,"India"],["CIMNE/Universitat Politècnica de Catalunya, Barcelona",1,"Spain"],["College of Civil Engineering, Hunan University",1,"China"],["College of Geological Engineering and Geomatics, Chang’an University",1,"China"],["College of Nursing & Health Professions, Arkansas State University",1,"USA"],["Construction and Environmental Engineering, Sapienza University of Rome",1,"Italy"],["Cooch Behar Panchanan Barma University, Panchanan Nagar",1,"India"],["Delhi Technological University, Bawana Road",1,"India"],["Delhi Technological University, Delhi",1,"India; United Kingdom"],["Disaster Prevention Research Institute, Kyoto University",1,"Japan"],["Doctoral Scholar, Indian Institute of Technology",1,"India"],["Dr. Nityanand Himalayan Research and Study Centre, Doon University",1,"India"],["Earth and Environmental Sciences, University of Birmingham",1,"UK"],["Earth and Environmental Sciences, University of Plymouth",1,"UK"],["Earth Science Department, University of Florence",1,"Italy"],["Earth Sciences Department, University of Florence",1,"Italy"],["Earth System Science and Engineering Division, IIT Guwahati",1,"India"],["Energy & Wetlands Research Group and IISc-EIACP, Centre for Ecological Sciences (CES)",1,"India"],["Engineering Geology Research Group (EGRG), University of Peradeniya",1,"Sri Lanka"],["Environment and Resources Sciences, University of Naples Federico II",1,"Italy"],["Environmental Sciences and Sustainable Engineering Centre, Indian Institute of Technology Palakkad",1,"India"],["Federal University Oye-Ekiti, Oye-Ekiti",1,"Nigeria"],["Geotechnical and Earth Resources Engineering, Asian Institute of Technology (AIT)",1,"Thailand"],["GESTAR II, University of Maryland",1,"USA"],["Glasgow Caledonian University, Glasgow",1,"UK"],["Graduate School of Agriculture, Ehime University",1,"Japan"],["Graduate School of Science and Technology, Niigata University",1,"Japan"],["Hanoi University of Civil Engineering, Hanoi",1,"Vietnam"],["HNB Garhwal University, Srinagar Uttarakhand",1,"India"],["IIT Kanpur, Kanpur",1,"India"],["IIT Mandi, Mandi",1,"India"],["IIT Roorkee",1,"India"],["IIT Ropar, Rupnagar",1,"India"],["IIT Tirupati",1,"India"],["Indian Institute of Science Education and Research (IISER), Mohali 140 306",1,"India"],["Indian Institute of Technology (Banaras Hindu University), Varanasi",1,"India"],["Indian Institute of Technology (Indian School of Mines) Dhanbad, Dhanbad",1,"India"],["Indian Institute of Technology Delhi, New Delhi",1,"India"],["Indian Institute of Technology Kanpur",1,"India"],["Indian Institute of Technology Kharagpur, Kharagpur",1,"India"],["Indian Institute of Technology Kharagpur, West Bengal",1,"India"],["Indian Institute of Technology Mandi",1,"India"],["Indian Institute of Technology Mandi, Kamand",1,"India"],["Indian Institute of Technology Mandi, Mandi",1,"India"],["Indian Institute of Technology Palakkad, Kerala",1,"India"],["Indian Institute of Technology Roorkee (IITR), Uttarakhand",1,"India"],["Indian Institute of Technology, Ropar",1,"India"],["Institute for Geophysics and Meteorology, University of Cologne",1,"Germany"],["Institute of Earth Sciences, University of Lausanne",1,"Switzerland"],["Institute of Earth Sciences, University of Silesia",1,"Poland"],["Institute of Engineering, Tribhuvan University",1,"Nepal"],["Institute of Environmental Science and Geography, University of Potsdam",1,"Germany"],["Institute of Geography and Regional Research, University of Vienna",1,"Austria"],["International Environmental Doctoral School, University of Silesia",1,"Poland"],["International Research Institute of Disaster Science, Tohoku University",1,"Japan"],["Jackson State University, Jackson",1,"USA"],["Jadavpur University, Kolkata",1,"India"],["Kasetsart University, Bangkok",1,"Netherlands; Thailand"],["Kirori Mal College, University of Delhi",1,"India"],["Kochi University, Kochi",1,"Japan"],["La Sapienza University of Rome, Rome",1,"Italy"],["Liege University, Liege",1,"Belgium"],["Lomonosov Moscow State University, Moscow",1,"Russia"],["Lovely Professional University, Phagwara",1,"India"],["Manipur University",1,"India"],["Marmara University, Istanbul",1,"Türkiye"],["Mekelle University, Mekelle",1,"Ethiopia"],["Mizoram University, Aizawl",1,"India"],["Moscow State University, Geological Department",1,"Russia"],["MSc, Jagannath University",1,"Bangladesh"],["National Institute of Technology Calicut, Kerala",1,"India"],["National Institute of Technology Hamirpur, Himachal Pradesh",1,"India"],["National Institute of Technology Karnataka (NITK), Surathkal",1,"India"],["National Institute of Technology Nagaland",1,"India"],["National Institute of Technology Puducherry, Karaikal",1,"India"],["National Institute of Technology Srinagar, Srinagar",1,"India"],["National Institute of Technology, Agartala",1,"India"],["National Weather Center HyDROS Lab, University of Oklahoma",1,"USA"],["Netaji Subhas University of Technology",1,"India"],["PhD Scholar, Yenepoya (Deemed to be University)",1,"India"],["Politecnico di Milano, Piazza Leonardo da Vinci",1,"Italy"],["Politecnico di Torino",1,"Italy"],["Rajiv Gandhi University of Knowledge Technologies (RGUKT), Nuzvid",1,"India"],["Ramaiah University of Applied Sciences, Bengaluru",1,"India"],["Regional Center for Geodesy (RCG), Motilal Nehru National Institute of Technology Allahabad",1,"India"],["Republic of Indonesia Defense University, Bogor",1,"Indonesia"],["Research Associate, Amrita Center for Wireless Networks and Applications (WNA)",1,"India"],["RWTH Aachen University",1,"Germany"],["Sabaragamuwa University of Sri Lanka, Belihuloya",1,"Sri Lanka"],["Savitribai Phule Pune University, Pune",1,"India"],["Sikkim University, Gairi Gaon",1,"India"],["Sikkim University, Gangtok",1,"India"],["Sikkim University, Gangtok- (Sikkim)",1,"India"],["Ss. Cyril and Methodius University in Skopje, Institute of Earthquake Engineering and Engineering Seismology",1,"North Macedonia"],["Ss. Cyril and Methodius University in Skopje, Skopje",1,"North Macedonia"],["Swiss Seismological Service at ETH Zurich, Sonneggstr. 5",1,"Switzerland"],["Technical College of Engineering, Duhok Polytechnic University",1,"Iraq"],["Technical University of Denmark – Arctic DTU, Sisimiut",1,"Denmark; Greenland"],["Technical University of Denmark, Lyngby",1,"Denmark; Greenland"],["Techno India University, Tripura",1,"India"],["The Open University of Sri Lanka",1,"Sri Lanka"],["The University of Hong Kong, Hong Kong",1,"China"],["The University of Hong Kong, Pok Fu Lam",1,"China"],["Thuy Loi University, Hanoi",1,"Vietnam"],["Tribhuvan University",1,"Nepal"],["University College London (UCL)",1,"UK"],["University College London (UCL), Gower Street",1,"UK"],["University of Allahabad, Prayagraj",1,"India"],["University of Allahabad, Prayagraj –",1,"India"],["University of Bari “Aldo Moro”, Bari (BA)",1,"Italy"],["University of Belgrade, Belgrade",1,"Serbia"],["University of Catania, Via Santa Sofia",1,"Italy"],["University of Delhi",1,"India"],["University of Delhi, Delhi",1,"India"],["University of Dhaka",1,"Bangladesh"],["University of Dhaka, Dhaka-1000",1,"Bangladesh"],["University of Felix Houphouët-Boigny, Abidjan",1,"Ivory Coast"],["University of Firenze, Firenze",1,"Italy"],["University of Granada, Avenida del Hospicio s/n",1,"Spain"],["University of Granada, Granada",1,"Spain"],["University of Iringa",1,"Tanzania"],["University of Kashmir, Srinagar-",1,"India"],["University of Kerala, Thiruvananthapuram",1,"India"],["University of Lausanne, Institute of Earth Sciences",1,"Switzerland"],["University of Lucknow, Lucknow",1,"India"],["University of Maryland, Baltimore County",1,"USA"],["University of Milan Bicocca, Piazza della Scienza 4",1,"Italy"],["University of Naples Parthenope",1,"Italy"],["University of Padjadjaran, Bandung",1,"Indonesia"],["University of Padova",1,"Italy"],["University of Peradeniya",1,"Sri Lanka"],["University of Perugia, Perugia",1,"Italy"],["University of Rijeka, Rijeka",1,"Croatia"],["University of Salerno, Salerno",1,"Italy"],["University of Sannio, Benevento",1,"Italy"],["University of Saskatchewan, Saskatoon",1,"Canada"],["University of Science, Vietnam National University",1,"Vietnam"],["University of Sri Jayewardenepura",1,"Sri Lanka"],["University of Strathclyde, Glasgow",1,"UK"],["University of the National Educational Commission, Institute of Biology and Earth Sciences",1,"Poland"],["University of Twente, 7500 AE",1,"Netherlands"],["University of Udine, Udine",1,"Italy"],["University of Vienna, Vienna",1,"Austria"],["University of Zurich",1,"Switzerland"],["Università degli Studi di Bari “Aldo Moro”, Bari",1,"Italy"],["Yamaguchi University, Yamaguchi-City",1,"Japan"]],"Government":[["Geological Survey of India, Dehradun",5,"India"],["National Remote Sensing Centre (NRSC), Indian Space Research Organisation (ISRO)",3,"India"],["National Remote Sensing Centre (NRSC), ISRO",3,"India"],["Wadia Institute of Himalayan Geology, Dehradun",3,"India"],["CSIR-National Geophysical Research Institute, Hyderabad",2,"India"],["Geohazard Research and Management Centre, Central Headquarters",2,"India"],["Geohazards and Mineral Exploration Division, Geosciences Group",2,"India"],["Geological Survey of India, Kolkata",2,"India"],["National Building Research Institute, Colombo",2,"Sri Lanka"],["National Centre for Earth Science Studies, Thiruvananthapuram",2,"India"],["National Institute of Maritime, Port and Aviation Technology",2,"Japan"],["National Remote Sensing Centre, Indian Space Research Organisation",2,"India"],["Public Works Research Institute, Tsukuba",2,"Japan"],["British Geological Survey, Nottingham",1,"UK"],["Czech Geological Survey, Klárov 131/",1,"Czech Republic"],["Environmental Studies and Services Division, National Building Research Institution",1,"Sri Lanka"],["Formerly, Geological Survey of Bangladesh",1,"Bangladesh"],["Geohazards and Mineral Exploration Division, National Remote Sensing Centre (NRSC)",1,"India"],["Geological Survey of Canada, Natural Resources Canada",1,"Canada"],["Geological Survey of India, Central Headquarters",1,"India"],["Geological Survey of India, Chandigarh",1,"India"],["Geological Survey of India, Chandigarh (U.T.)",1,"India"],["Geological Survey of India, Chandigarh- (U.T.)",1,"India"],["Geological Survey of India, CHQ",1,"India"],["Geological Survey of India, Hyderabad",1,"India"],["Geological Survey of India, Kashmir Office",1,"India"],["Geological Survey of India, Lucknow",1,"India"],["Geological Survey of India, Pune-",1,"India"],["Geological Survey of India, SR",1,"India"],["Geological Survey of India, SU: Jammu Kashmir and Ladakh",1,"India"],["Geological Survey of India, SU: KG",1,"India"],["Geological Survey of India, SU: Uttarakhand",1,"India"],["Government of Nepal, Kathmandu",1,"Nepal"],["Government of Nepal, Kathmandu Metropolitan City",1,"Nepal"],["Institute of Geology and Paleontology / Geological Survey of Cuba, Havana",1,"Cuba"],["Landslide Research and Risk Management Division, National Building Research Institute",1,"Sri Lanka"],["National Centre for Earth Science Studies (NCESS), Ministry of Earth Sciences",1,"India"],["National Centre for Earth Science Studies (NCESS), Thiruvananthapuram",1,"India"],["National Centre for Earth Science Studies, Ministry of Earth Sciences",1,"India"],["Natural Resources Canada, Geological Survey of Canada",1,"Canada"],["Pacific Division, Geological Survey of Canada",1,"Canada"],["Pondicherry University, Puducherry; National Centre for Earth Science Studies",1,"India"],["Reduction of Landslide Vulnerability by Mitigation Measures Project, Ministry of Defence",1,"Sri Lanka"],["Research Institute for Natural Hazards and Disaster Recovery, Niigata University",1,"Japan"],["Senior Engineer, National Building Research Institute",1,"Sri Lanka"],["Senior Geologist, Geological Survey of India",1,"India"],["U.S. Geological Survey, Moffett Field",1,"USA"]],"Industry":[["Kokusai Kogyo Co., Ltd.",2,"Japan"],["AECOM Ltd. Ground Engineering",1,"UK"],["AECOM UK",1,"UK"],["BGC Engineering Inc., Fredericton",1,"Canada"],["GEOCHANGE Consulting e.U., Vienna",1,"Austria"],["JICA Expert of Technical Cooperation Project, Nippon Koei Co.",1,"Japan"],["Maccaferri Environmental Solutions Pvt Ltd.",1,"India"],["Maccaferri Environmental Solutions Pvt Ltd., India",1,"India"],["Moody's Analytics, Noida",1,"India"],["Moody’s Insurance Solution, 7575 Gateway Blvd",1,"USA"],["Nippon Koei Co., Ltd.",1,"Japan"],["Technical Advisor, Nippon Koei Co.",1,"Japan"]],"Society/NGO":[["Darjeeling Himalaya Initiative (DHI), Darjeeling",3,"India"],["Asia Lead: Climate and Resilience, Practical Action",1,"Nepal"],["Association of Polish Geomorphologists",1,"Poland"],["Founder Chairperson, Community Based Disaster Risk Management Society",1,"India"],["Geoinfra Research Institute, Lalitpur",1,"Nepal"],["IUGG Commission on Geophysical Risk and Sustainability",1,""],["JVE BENIN (Jeunes Volontaires pour l'Environnement – Benin)",1,"Republic of Benin"],["People in Need (PIN), Kathmandu",1,"Nepal"],["Sankala Foundation, New Delhi",1,"India"],["Senior Officer-Anticipatory Action, Save the Children",1,"Bangladesh"],["The Small Earth Nepal (SEN), Kathmandu",1,"Nepal"]],"Research Institute":[["Institute of Rock Structure and Mechanics, Czech Academy of Sciences",2,"Czech Republic"],["Polish Geological Institute – National Research Institute, Geohazards Center",2,"Poland"],["Polish Geological Institute – National Research Institute, Warsaw",2,"Poland"],["WSL Institute for Snow and Avalanche Research SLF, Davos",2,"Switzerland"],["Africa International Policy Research Center (AIPRC)",1,"India"],["Chief expert, Research Institute of Energy Structures – branch of JSC “Hydroproject Institute”",1,"Russia"],["CSIR-Central Building Research Institute, Roorkee",1,"India"],["Geohazard Center of Polish Geological Institute – National Research Institute, Warsaw",1,"Poland"],["Geohazards Center, Polish Geological Institute - National Research Institute",1,"Poland"],["GFZ German Research Centre for Geosciences, Potsdam",1,"Germany"],["Institute of Geological Sciences, Polish Academy of Sciences",1,"Poland"],["Physical Sciences, Academy of Scientific and Innovative Research (AcSIR)",1,"India"],["Polish Geological Institute - National Research Institute, Warsaw",1,"Poland"],["Polish Geological Institute – National Research Institute, Geohazard Center",1,"Poland"],["Risk Group, Institute of Earth Sciences",1,"Switzerland"],["Risk-group, Institute of Earth Sciences",1,"Switzerland"],["Water Resources and Energy Research Centre, Water and Energy Commission Secretariat",1,"Nepal"]],"Unknown":[["Universitas Gadjah Mada, Yogyakarta",3,"Indonesia"],["Bioeconomy Science Institute, Palmerston North",2,"New Zealand"],["Frankfurt",2,"Germany"],["Indian Institute of Science Education and Research, Mohali",2,"India"],["Institute of Engineering, Pulchowk Campus",2,"Nepal"],["M.Sc. Disaster Risk Management, Pulchowk Campus",2,"Nepal"],["National Institute of Oceanography and Applied Geophysics – OGS",2,"Italy; Syria"],["Quezon City",2,"Philippines"],["Universidad de Medellín, Medellín",2,"Colombia"],["BGC Engineering, Kingston Ontario",1,"Canada"],["CamiLab, Modeling",1,"Italy"],["Center for Remote Sensing and Geoinformatics, Sathyabama Institute of Science and Technology",1,"India"],["CONICET, IANIGLA – CCT Mendoza",1,"Argentina"],["CSIR-North East Institute of Science and Technology, Jorhat",1,"India"],["Dehradun",1,"India"],["Departamento de Geodinámica, Universidad de Granada",1,"Spain"],["Deputy Manager (Geology), Chenab Valley Power Projects Limited",1,"India"],["Dipartimento di Ingegneria Civile, Ambientale e Territoriale",1,"Italy"],["Directorate of Innovation, Universidad EAFIT",1,"Colombia"],["Disaster Management",1,"India"],["Earth Sciences New Zealand, Avalon Campus",1,"New Zealand"],["ENES Morelia, UNAM",1,"Mexico"],["Fredericton, NB",1,"Canada"],["G.B. Pant National Institute of Himalayan Environment (NIHE), Kosi-Katarmal",1,"India"],["Geological, and Environmental Sciences",1,"Italy"],["GEOPRAEVENT AG, Zurich",1,"Switzerland"],["Geotechnical Engineer, Reduction of Landslide Vulnerability by Mitigation Measures Project (RLVMMP)",1,"Sri Lanka"],["GIS Cell, MNNIT Allahabad",1,"India"],["Govt Degree College Anantnag -, J&K HED",1,"India"],["H. N. B. G. U. Srinagar Garhwal, Uttarakhand-",1,"India"],["Hexagon Geosystems, Gurugram",1,"India"],["IIT(BHU), Varanasi",1,"India"],["IMAGEO Srl, Milano",1,"Italy"],["Institut des Sciences de la Terre – Institut de Recherche pour le Développement, Université Savoie Mont Blanc",1,"France"],["Institute of Hazard, Risk",1,"UK"],["Institute of Hydrogeology, Engineering Geology and Applied Geophysics",1,"Czechia"],["Instituto de Ciencias del Mar (ICM-CSIC), Continental Margins Group",1,"Spain"],["International Institute of Earthquake Engineering and Seismology (IIEES), Tehran",1,"Iran"],["ISPRA - Institute for Environmental Protection and Research",1,"Italy"],["ISPRA - Institute for Environmental Protection and Research, Rome",1,"Italy"],["Istituto di Ricerca per la Protezione Idrogeologica, Consiglio Nazionale delle Ricerche",1,"Italy"],["LandScient, Landslide Scientific Assessment",1,"Colombia"],["LLC \"Petromodeling\", Moscow",1,"Russia"],["LLC “Petromodeling”, Moscow",1,"Russia"],["Mizoram Remote Sensing Application Centre (MIRSAC), Aizawl",1,"India"],["Monitorius FlexCo, Vienna",1,"Austria"],["National Institute of Advanced Studies, Indian Institute of Science Campus",1,"India"],["National Institute of Hydrology, Western Himalayan Regional Centre",1,"India"],["National Institute of Mental Health and Neurosciences, Bangalore",1,"India"],["National Institute of Rock Mechanics, Bengaluru",1,"India"],["Nature, and Landscape",1,"Belgium"],["New Delhi",1,"India"],["NITTTR, Chennai",1,"India"],["Northeastern Space Applications Centre, Umiam",1,"India"],["Norwegian Geotechnical Institute, Oslo",1,"Norway"],["NVE, SVFS",1,"Norway"],["of Geography Doctoral Program, Universitas Gadjah Mada",1,"Indonesia"],["Oriental Consultants Global",1,"Japan"],["Orlando Pandolfi Studio, Carrara",1,"Italy"],["Orlando Pandolfi, Carrara",1,"Italy"],["PhD Student, Centre of Excellence in Disaster Mitigation and Management (CoEDMM)",1,"India"],["PhD, Centre of Excellence in Disaster Mitigation and Management",1,"India"],["Proekt Inzenering Dooel Skopje",1,"North Macedonia"],["Risk Analysis Group, Institute of Earth Science",1,"Switzerland"],["Sacred Heart College (Autonomous), Chalakudy",1,"India"],["Solid State Physics Laboratory, Defence R&D Organisation",1,"India"],["Studio Pandolfi, Carrara",1,"Italy"],["Transport and Main Roads, Queensland",1,"Australia"],["TRE Altamira S.r.l.",1,"Italy"],["Universidad de Medellín, Civil Engineering Program",1,"Colombia"],["Universidad de Salamanca, Salamanca",1,"Spain"],["Universidad EAFIT",1,"Colombia"],["Universidad Nacional de Colombia, Bogotá",1,"Colombia"],["Universidade de São Paulo, Institute of Astronomy",1,"Brazil"],["Uttarakhand Landslide Mitigation and Management Centre, Dehradun",1,"India"],["VIT, Vellore",1,"India"],["World Bank Group",1,"Spain"]]};
+const ORG_DIR_COLORS = {Academic:'#1a3a6b',Government:'#c0392b',Industry:'#c0771a','Society/NGO':'#2d6a4f','Research Institute':'#6b3a9e',Unknown:'#607d8b'};
+const ORG_DIR_ORDER = ['Academic','Government','Industry','Society/NGO','Research Institute','Unknown'];
+let dirTypeFilter = 'all';
+
+function renderOrgDir(data) {
+  var html = '';
+  var total = 0;
+  ORG_DIR_ORDER.forEach(function(t) {
+    var rows = (data[t]||[]);
+    if (!rows.length) return;
+    total += rows.length;
+    var col = ORG_DIR_COLORS[t]||'#607d8b';
+    html += '<div style="padding:10px 20px 4px">'
+      +'<div style="font-size:.72rem;font-weight:800;letter-spacing:.08em;text-transform:uppercase;color:'+col+';margin-bottom:6px">'
+      +t+' <span style="opacity:.5;font-weight:500">('+rows.length+' orgs)</span></div>'
+      +'<table style="width:100%;border-collapse:collapse">'
+      +'<thead><tr style="font-size:.72rem;color:#8a9bb0;font-weight:700">'
+      +'<th style="width:36px;text-align:center;padding:3px 6px">#</th>'
+      +'<th style="text-align:left;padding:3px 6px">Organisation</th>'
+      +'<th style="width:140px;text-align:left;padding:3px 6px">Country</th>'
+      +'<th style="width:52px;text-align:center;padding:3px 6px">Papers</th>'
+      +'</tr></thead><tbody>';
+    rows.forEach(function(o,i) {
+      var bg = (i%2===0)?'#f8faff':'#ffffff';
+      html += '<tr style="background:'+bg+';font-size:.8rem">'
+        +'<td style="text-align:center;color:#c0c8d8;padding:3px 6px">'+(i+1)+'</td>'
+        +'<td style="padding:4px 6px;color:#222">'+o[0]+'</td>'
+        +'<td style="padding:4px 6px;color:#666;font-size:.75rem">'+o[2]+'</td>'
+        +'<td style="text-align:center;font-weight:700;color:'+col+'">'+o[1]+'</td>'
+        +'</tr>';
+    });
+    html += '</tbody></table></div>';
+  });
+  document.getElementById('orgDirBody').innerHTML = html || '<div style="padding:24px;color:#8a9bb0;text-align:center">No results</div>';
+  document.getElementById('dirCount').textContent = total+' organisations';
+}
+
+function filterOrgDir() {
+  var q = document.getElementById('dirSearch').value.toLowerCase();
+  var result = {};
+  ORG_DIR_ORDER.forEach(function(t) {
+    if (dirTypeFilter !== 'all' && t !== dirTypeFilter) return;
+    result[t] = (ORG_DIRECTORY[t]||[]).filter(function(o) {
+      return !q || o[0].toLowerCase().indexOf(q)>-1 || o[2].toLowerCase().indexOf(q)>-1;
+    });
+  });
+  renderOrgDir(result);
+}
+
+function setDirFilter(type, btn) {
+  dirTypeFilter = type;
+  document.querySelectorAll('#organisations .type-filter').forEach(function(b){b.classList.remove('tf-active');});
+  btn.classList.add('tf-active');
+  filterOrgDir();
+}
+
+function initOrgDir() {
+  filterOrgDir();
+}
+
+let topOrgTypeFilter = 'all';
+function renderTopOrgsTable(rows) {
+  var TYPE_COLORS = {Academic:'#1a3a6b',Government:'#c0392b',Industry:'#c0771a','Society/NGO':'#2d6a4f','Research Institute':'#6b3a9e',Unknown:'#607d8b',Other:'#607d8b'};
+  document.getElementById('topOrgTableBody').innerHTML = rows.map(function(o,i) {
+    var orig = TOP_ORGS.indexOf(o);
+    var rank = orig+1;
+    var rc = rank===1?'rank-1':rank===2?'rank-2':rank===3?'rank-3':'rank-n';
+    var tc = TYPE_COLORS[o[2]]||'#607d8b';
+    return '<tr>'
+      +'<td><div class="rank-cell '+rc+'">'+rank+'</div></td>'
+      +'<td style="font-weight:'+(rank<=3?700:400)+'">'+o[0]+'</td>'
+      +'<td style="color:#555;font-size:.85rem">'+o[3]+'</td>'
+      +'<td><span style="background:'+tc+';color:#fff;border-radius:10px;padding:2px 9px;font-size:.72rem;font-weight:700;white-space:nowrap">'+o[2]+'</span></td>'
+      +'<td style="text-align:center;font-weight:700;color:var(--navy)">'+o[1]+'</td>'
+      +'</tr>';
+  }).join('');
+  document.getElementById('topOrgCount').textContent = rows.length+' organisation'+(rows.length!==1?'s':'');
+}
+function filterTopOrgsTable() {
+  var q = document.getElementById('topOrgSearch').value.toLowerCase();
+  var d = TOP_ORGS.filter(function(o) {
+    return (!q || o[0].toLowerCase().indexOf(q)>-1 || o[3].toLowerCase().indexOf(q)>-1)
+      && (topOrgTypeFilter==='all' || o[2]===topOrgTypeFilter);
+  });
+  renderTopOrgsTable(d);
+}
+function setTopOrgFilter(type, btn) {
+  topOrgTypeFilter = type;
+  document.querySelectorAll('#organisations .type-filter').forEach(function(b){b.classList.remove('tf-active');});
+  btn.classList.add('tf-active');
+  filterTopOrgsTable();
+}
+
+function initOrgTab() {
+  renderOrgKPIs();
+  renderTopOrgsTable(TOP_ORGS);
+  renderOrgTable(ORG_COUNTRIES);
+  setTimeout(initOrgCharts, 50);
+  setTimeout(initOrgDir, 100);
+}
+
+
+// -- AMRITA DATA --
+const AMRITA_PAPERS = [{"sl": "1", "theme": "Theme 1", "title": "Cascading Hazards in the Makran Subduction Zone: Landslides and Tsunami Generation", "authors": "Masoud Barati, Niloofar Abed", "affiliations": ["Amrita Vishwa Vidyapeetham, Amrita School for Sustainable Futures, Amritapuri"]}, {"sl": "2", "theme": "Theme 1", "title": "Permafrost Significance of Rock Glaciers and Their Role in Mass Movement in the \nJhelum Basin, Kashmir Himalaya", "authors": "Zahid Majeed, Neelima Nizampatnam, Vivek Venugopal, Muneer Ahmad", "affiliations": ["Amrita School of Sustainable Futures, Amrita Vishwa Vidyapeetham, Amritapuri", "Department of Electronics and Communication Engineering, Amrita School of Engineering Bengaluru, Amrita Vishwa Vidyapeetham"]}, {"sl": "3", "theme": "Theme 1", "title": "Integrated Dynamic Multi-Hazard Risk Management Framework for \nGLOFs, Landslides and Floods", "authors": "Hari Chandana Ekkirala, Maneesha Vinodini Ramesh", "affiliations": ["Amrita School for Sustainable Futures, Amrita Vishwa Vidyapeetham, Amritapuri"]}, {"sl": "4", "theme": "Theme 1", "title": "An Impact-Based Dynamic Landslide Risk Mapping Platform for Regional Early Warning in Kerala, India", "authors": "Hari Chandana Ekkirala, Nitin Kumar M, Balmukund Singh, Hemalatha T, Amrita Jayakumar, Maneesha Vinodini Ramesh", "affiliations": ["Amrita Center for Wireless Networks and Applications, Amrita Vishwa Vidyapeetham, Amritapuri; Amrita School for Sustainable Futures, Amrita Vishwa Vidyapeetham, Amritapuri"]}, {"sl": "5", "theme": "Theme 2", "title": "A multi-region citizen-augmented landslide inventory of 642 events across India", "authors": "Ramesh Guntha", "affiliations": ["Center for Wireless Networks & Applications (WNA), Amrita Vishwa Vidyapeetham, Amritapuri"]}, {"sl": "6", "theme": "Theme 2", "title": "Temporal Evolution of Landslide-Prone Areas Using Multi-Temporal SAR Data", "authors": "Aarathi Radhakrishnan, Hemalatha T, Rohit P", "affiliations": ["Center for Wireless Networks & Applications (WNA), Amrita Vishwa Vidyapeetham, Amritapuri"]}, {"sl": "7", "theme": "Theme 2", "title": "IoT-Driven Geophone-Based Microseismic Sensing and Monitoring Platform for Real-\nTime Landslide Detection and Early Warning", "authors": "Indukala P K, Maneesha Vinodini Ramesh", "affiliations": ["Center for Wireless Networks & Applications (WNA), Amrita Vishwa Vidyapeetham, Amritapuri"]}, {"sl": "8", "theme": "Theme 2", "title": "Subsurface Characterization of a Landslide-Prone Slope in Munnar, Kerala Using Electrical Resistivity Tomography", "authors": "Jayakrishnan Ramachandran, Bichu K Raman, Nitin Kumar, Hemalatha T", "affiliations": ["Center for Wireless Networks and Applications (WNA), Amrita Vishwa Vidyapeetham, Amritapuri"]}, {"sl": "9", "theme": "Theme 2", "title": "Mass Movement along Varkala Cliff Geoheritage Site, Kerala, India - Mitigation and Valorisation Strategies for Sustainable Conservation", "authors": "Sudesh Kumar Wadhawan, Arunkumar , Nitin Kumar, Balmukund, Maneesha Vinodini Ramesh", "affiliations": ["Center for Wireless Networks and Applications, Amrita Vishwa Vidyapeetham, Amritapuri; Amrita School for Sustainable Futures, Amrita Vishwa Vidyapeetham, Amritapuri"]}, {"sl": "10", "theme": "Theme 2", "title": "Post-Debris Flow Geophysical and Geotechnical Investigation of the 2024 Mundakkai-\nChooralmala Disaster", "authors": "Aravind S Nair, Sabari Ramesh, Balmukund Singh, Akhila P.S., Maneesha Vinodini Ramesh", "affiliations": ["Amrita Center for Wireless Networks & Applications (AmritaWNA), Amrita Vishwa Vidyapeetham, Kollam"]}, {"sl": "11", "theme": "Theme 3", "title": "Recovery and Rehabilitation of Degraded Landscape Due to Mass Wasting in Munnar Region of Western Ghats in Kerala, India", "authors": "Sudesh Kumar Wadhawan, Balmukund Singh, Nitin Kumar, Sabari Ramesh, Maneesha Vinodini Ramesh", "affiliations": ["Center for Wireless Networks and Applications, Amrita Vishwa Vidyapeetham, Amritapuri"]}, {"sl": "12", "theme": "Theme 3", "title": "Markov Switching Models and their Applications in Modeling landslides and Debris\nFlows", "authors": "Aadityan Sridharan, Georg Gutjahr, Sundararaman Goapalan", "affiliations": ["Center for Wireless Networks and Applications, Amrita Vishwa Vidyapeetham, Amritapuri", "Department of Health Science Research, Amrita Institute of Medical Sciences and Research Center, Kochi", "Department of Electronics and Communication Engineering, Amrita Vishwa Vidyapeetham, Amritapuri"]}, {"sl": "13", "theme": "Theme 4", "title": "Highway-corridor landslide impacts in monsoon India: 325 events with damage\nobservations", "authors": "Ramesh Guntha", "affiliations": ["Center for Wireless Networks & Applications (WNA), Amrita Vishwa Vidyapeetham, Amritapuri"]}, {"sl": "14", "theme": "Theme 4", "title": "Modeling the Spatial and Temporal susceptibility of Post-Seismic Landslides in Papua New Guinea", "authors": "Gayathri G Reshma, Aadityan Sridharan, Georg Gutjahr", "affiliations": ["Department of Mathematics, Amrita Vishwa Vidyapeetham Amritapuri, Amritapuri", "Center for Wireless Networks and Applications, Amrita Vishwa Vidyapeetham, Amritapuri", "Department of Health Science Research, Amrita Institute of Medical Sciences and Research Center, Kochi"]}, {"sl": "15", "theme": "Theme 4", "title": "Landslide Susceptibility Mapping (LSM) along Badethi–Uttarkashi National Highway (NH-134 &  NH-108) and its Adjoining Areas, Uttarkashi District, Uttarakhand, India", "authors": "Aravind S Nair", "affiliations": ["Research Associate, Amrita Center for Wireless Networks and Applications (WNA), Amrita Vishwa Vidyapeetham, Amritapuri Campus, Kollam, Kerala-690525"]}, {"sl": "16", "theme": "Theme 4", "title": "Beyond Susceptibility Mapping: A Catchment-Scale Process Representation Framework\nfor Understanding Landslide Emergence in the Western Ghats, India", "authors": "Balmukund Singh, Harichandana, Nitin Kumar, Sabari Ramesh, S.K. Wadhavan, Maneesha Vinodini Ramesh", "affiliations": ["Center for Wireless Networks & Applications (WNA), Amrita Vishwa Vidyapeetham, Amritapuri; Amrita School for Sustainable Futures, Amrita Vishwa Vidyapeetham, Amritapuri"]}, {"sl": "17", "theme": "Theme 5", "title": "Green Mesh Radar Internet of Things Architecture for Landslide Early Warning\nSystem", "authors": "Praveen K, Sangeeth Kumar, Maneesha Vinodini Ramesh", "affiliations": ["Center for Wireless Networks & Applications (WNA), Amrita Vishwa Vidyapeetham, Amritapuri"]}, {"sl": "18", "theme": "Theme 5", "title": "Governance lessons from a 7-year citizen-augmented landslide inventory in India", "authors": "Ramesh Guntha", "affiliations": ["Center for Wireless Networks & Applications (WNA), Amrita Vishwa Vidyapeetham, Amritapuri"]}, {"sl": "19", "theme": "Theme 5", "title": "Empower Community: a participatory platform for landslide data and community monitoring", "authors": "Aiswarya Aravindakshan, Ramesh Gunta", "affiliations": ["Center for Wireless Networks & Applications (WNA), Amrita Vishwa Vidyapeetham, Amritapuri"]}, {"sl": "20", "theme": "Theme 5", "title": "Enhancing landslide detection in Western Ghats of Kerala, India with Deep Learning", "authors": "Abhilash Sreekumar, Hemalatha T, Maneesha Vinodini Ramesh", "affiliations": ["Center for Wireless Networks & Applications (WNA), Amrita Vishwa Vidyapeetham, Amritapuri"]}, {"sl": "21", "theme": "Theme 5", "title": "Hybrid AI for Multi-Depth Pore Pressure Forecasting in Munnar, Kerala", "authors": "Namitha Narayan, Hemalatha T, Maneesha Vinodini Ramesh", "affiliations": ["Center for Wireless Networks & Applications (WNA), Amrita Vishwa Vidyapeetham, Amritapuri"]}, {"sl": "22", "theme": "Theme 5", "title": "Physics informed Spatiotemporal graph neural network to estimate landslide hazard", "authors": "Donadi Akash Bhavani Sankar, Aadityan Sridharan, Maneesha Vinodini Ramesh", "affiliations": ["Department of Mathematics, Amrita Vishwa Vidyapeetham, Amritapuri", "Center for Wireless Networks and Applications, Amrita Vishwa Vidyapeetham, Amritapuri"]}, {"sl": "23", "theme": "Theme 5", "title": "Hydro-Meteorological Characteristics of Landslide-Triggering Rainfall over the\nWestern Ghats, India", "authors": "A. Vyshnavi, Dhanya M", "affiliations": ["Department of Physics, Amrita Vishwa Vidyapeetham, Amritapuri; Centre for Wireless Networks & Applications, Amritapuri"]}, {"sl": "24", "theme": "Theme 6", "title": "Rainfall-triggered landslides 2019–2026: insights from a 711-event Indian inventory", "authors": "Ramesh Guntha", "affiliations": ["Center for Wireless Networks & Applications (WNA), Amrita Vishwa Vidyapeetham, Amritapuri"]}, {"sl": "25", "theme": "Theme 6", "title": "A Digital Platform for Capturing and Mobilizing Indigenous and Local Knowledge for Landslide Resilience: The Heritage Management System", "authors": "Maya Presannakumar, Ramesh Guntha", "affiliations": ["Center for Wireless Networks & Applications (WNA), Amrita Vishwa Vidyapeetham, Amritapuri"]}];
+const AMRITA_UNITS = [["Center for Wireless Networks & Applications (WNA)", 22], ["Amrita School for Sustainable Futures", 3], ["Dept. of Electronics & Communication Engineering", 2], ["Amrita Institute of Medical Sciences", 2], ["Department of Mathematics", 2]];
+const AMRITA_TC = {'Theme 1':'#1a3a6b','Theme 2':'#2563a8','Theme 3':'#2d6a4f','Theme 4':'#c0771a','Theme 5':'#c0392b','Theme 6':'#6b3a9e'};
+const AMRITA_TS = {'Theme 1':'t1','Theme 2':'t2','Theme 3':'t3','Theme 4':'t4','Theme 5':'t5','Theme 6':'t6'};
+let amritaThemeFilter = 'all';
+
+function renderAmritaPapers(papers) {
+  var list = document.getElementById('amritaPaperList');
+  list.innerHTML = papers.map(function(p) {
+    var tc = AMRITA_TC[p.theme] || '#607d8b';
+    var ts = AMRITA_TS[p.theme] || '';
+    var aff = p.affiliations && p.affiliations[0] ? p.affiliations[0] : '';
+    var shortAff = aff.length > 90 ? aff.substring(0,90)+'...' : aff;
+    return '<div class="paper-card '+ts+'">'
+      +'<span class="paper-theme-badge" style="background:'+tc+'">'+p.theme+'</span>'
+      +'<div class="paper-title">'+p.title+'</div>'
+      +'<div class="paper-authors">'+p.authors+'</div>'
+      +'<div class="paper-aff">'+shortAff+'</div>'
+      +'</div>';
+  }).join('');
+  document.getElementById('amritaPaperCount').textContent = papers.length+' paper'+(papers.length!==1?'s':'');
+}
+
+function filterAmritaPapers() {
+  var q = document.getElementById('amritaSearch').value.toLowerCase();
+  var d = AMRITA_PAPERS;
+  if (amritaThemeFilter !== 'all') d = d.filter(function(p){return p.theme===amritaThemeFilter;});
+  if (q) d = d.filter(function(p){return p.title.toLowerCase().indexOf(q)>-1||p.authors.toLowerCase().indexOf(q)>-1;});
+  renderAmritaPapers(d);
+}
+
+function filterAmritaTheme(theme, btn) {
+  amritaThemeFilter = theme;
+  document.querySelectorAll('.paper-filter-row .filter-btn').forEach(function(b){b.classList.remove('active');});
+  btn.classList.add('active');
+  filterAmritaPapers();
+}
+
+var amritaChartsInit = false;
+function initAmritaCharts() {
+  if (amritaChartsInit) return; amritaChartsInit = true;
+  var themes = ['Theme 1','Theme 2','Theme 3','Theme 4','Theme 5','Theme 6'];
+  var tCounts = themes.map(function(t){return AMRITA_PAPERS.filter(function(p){return p.theme===t;}).length;});
+  var tColors = themes.map(function(t){return AMRITA_TC[t];});
+  new Chart(document.getElementById('amritaThemeBar'),{type:'bar',
+    data:{labels:['T1','T2','T3','T4','T5','T6'],
+      datasets:[{label:'Papers',data:tCounts,backgroundColor:tColors,borderRadius:5}]},
+    options:{responsive:true,maintainAspectRatio:false,
+      plugins:{legend:{display:false},tooltip:{callbacks:{label:function(ctx){return ' '+ctx.raw+' papers';}}}},
+      scales:{x:{ticks:{font:{family:FF,size:12}},grid:{display:false}},
+        y:{ticks:{font:{family:FF,size:11},stepSize:1},grid:{color:'#f0f4fa'}}}}});
+
+  var uLabels = AMRITA_UNITS.map(function(u){return u[0].length>35?u[0].substring(0,35)+'...':u[0];});
+  var uCounts = AMRITA_UNITS.map(function(u){return u[1];});
+  var uColors = ['#c0392b','#e74c3c','#f39c12'];
+  new Chart(document.getElementById('amritaUnitBar'),{type:'bar',
+    data:{labels:uLabels,datasets:[{label:'Papers',data:uCounts,
+      backgroundColor:AMRITA_UNITS.map(function(_,i){return uColors[i]||'#c0392b';}),borderRadius:5}]},
+    options:{responsive:true,maintainAspectRatio:false,indexAxis:'y',
+      plugins:{legend:{display:false},tooltip:{callbacks:{
+        title:function(ctx){return AMRITA_UNITS[ctx[0].dataIndex][0];},
+        label:function(ctx){return ' '+ctx.raw+' papers';}}}},
+      scales:{x:{ticks:{font:{family:FF,size:11}},grid:{color:'#f0f4fa'}},
+        y:{ticks:{font:{family:FF,size:10}}}}}});
+}
+
+function initAmritaTab() {
+  renderAmritaPapers(AMRITA_PAPERS);
+  setTimeout(initAmritaCharts, 50);
+}
+
+// ── INIT ─────────────────────────────────────────────────────
+renderThemeGrid();
+renderRegionGrid();
+renderSessionDir();
+renderTable(COUNTRIES);
+setTimeout(initOverviewCharts,150);
+</script>
+</body>
+</html>
